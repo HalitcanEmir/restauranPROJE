@@ -48,20 +48,29 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h5><i class="bi bi-calendar-check"></i> Ziyaretler</h5>
+                <h5><i class="bi bi-calendar-check"></i> Gittiğim Yerler</h5>
             </div>
             <div class="card-body">
                 {% if visits %}
                     {% for visit in visits %}
                     <div class="border-bottom pb-3 mb-3">
-                        <div class="d-flex justify-content-between">
-                            <h6>
-                                <a href="{% url 'places:place_detail' visit.place.id %}" class="text-decoration-none">
-                                    {{ visit.place.name }}
-                                </a>
-                            </h6>
-                            <small class="text-muted">{{ visit.visited_at|date:"d M Y" }}</small>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6>
+                                    <a href="{% url 'places:place_detail' visit.place.id %}" class="text-decoration-none">
+                                        {{ visit.place.name }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ visit.visited_at|date:"d M Y" }}</small>
+                            </div>
+                            {% if visit.sentiment %}
+                            <span class="badge bg-primary ms-2">
+                                {{ visit.get_sentiment_display }}
+                            </span>
+                            {% endif %}
                         </div>
+                        
+                        {% if visit.rating %}
                         <div class="mb-2">
                             <span class="rating-stars">
                                 {% for i in "12345" %}
@@ -72,10 +81,38 @@
                                     {% endif %}
                                 {% endfor %}
                             </span>
-                            <span class="badge bg-secondary">{{ visit.get_with_whom_display }}</span>
+                            <small class="text-muted ms-2">{{ visit.rating }}/5</small>
                         </div>
+                        {% endif %}
+                        
+                        {% if visit.tags %}
+                        <div class="mb-2">
+                            {% for tag in visit.tags %}
+                                <span class="badge bg-info">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if visit.suitable_for %}
+                        <div class="mb-2">
+                            <small class="text-muted">Kiminle:</small>
+                            {% for suitable in visit.suitable_for %}
+                                <span class="badge bg-secondary">{{ suitable }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if visit.atmosphere %}
+                        <div class="mb-2">
+                            <small class="text-muted">Ortam:</small>
+                            {% for atm in visit.atmosphere %}
+                                <span class="badge bg-success">{{ atm }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
                         {% if visit.comment %}
-                        <p class="mb-2">{{ visit.comment|truncatewords:30 }}</p>
+                        <p class="mb-2 mt-2">{{ visit.comment|truncatewords:30 }}</p>
                         {% endif %}
                     </div>
                     {% endfor %}

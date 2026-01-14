@@ -50,13 +50,13 @@
                 {% if user.is_authenticated %}
                 <div class="mt-4">
                     {% if user_visit %}
-                        <a href="{% url 'places:add_review' place.id %}" class="btn btn-warning">
+                        <button onclick="openReviewModal({{ place.id }}, true)" class="btn btn-warning">
                             <i class="bi bi-pencil"></i> Değerlendirmemi Güncelle
-                        </a>
+                        </button>
                     {% else %}
-                        <a href="{% url 'places:add_review' place.id %}" class="btn btn-primary">
+                        <button onclick="openReviewModal({{ place.id }}, false)" class="btn btn-primary">
                             <i class="bi bi-plus-circle"></i> Ben de Gittim - Değerlendir
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
                 {% else %}
@@ -122,4 +122,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% include 'places/review_modal.html' %}
 {% endblock %}

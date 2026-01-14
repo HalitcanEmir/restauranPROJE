@@ -7,10 +7,12 @@ class VisitSerializer(serializers.ModelSerializer):
     """Ziyaret serializer"""
     user = serializers.StringRelatedField()
     user_username = serializers.CharField(source='user.username', read_only=True)
+    sentiment_display = serializers.CharField(source='get_sentiment_display', read_only=True)
     
     class Meta:
         model = Visit
-        fields = ['id', 'user', 'user_username', 'visited_at', 'with_whom', 'rating', 'comment', 'mood_tags']
+        fields = ['id', 'user', 'user_username', 'visited_at', 'sentiment', 'sentiment_display', 
+                  'tags', 'suitable_for', 'atmosphere', 'with_whom', 'rating', 'comment', 'mood_tags']
 
 
 class PlaceSerializer(serializers.ModelSerializer):

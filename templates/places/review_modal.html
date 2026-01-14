@@ -1,0 +1,722 @@
+<!-- Review Bottom Sheet Modal -->
+<div id="reviewModal" class="review-modal">
+    <div class="review-modal-overlay" onclick="closeReviewModal()"></div>
+    <div class="review-modal-content">
+        <div class="review-header">
+            <h5 id="reviewPlaceName">Mekan</h5>
+            <button class="btn-close" onclick="closeReviewModal()"></button>
+        </div>
+        
+        <div class="review-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="reviewProgress"></div>
+            </div>
+            <span class="progress-text" id="reviewProgressText">1 / 6</span>
+        </div>
+        
+        <div class="review-cards" id="reviewCards">
+            <!-- Kart 1: Genel İzlenim -->
+            <div class="review-card active" data-step="1">
+                <h4>Nasıl buldun?</h4>
+                <div class="review-options">
+                    <button class="review-option-btn" data-value="excellent" onclick="selectSentiment('excellent', this)">
+                        <span class="emoji">😍</span>
+                        <span>Bayıldım</span>
+                    </button>
+                    <button class="review-option-btn" data-value="good" onclick="selectSentiment('good', this)">
+                        <span class="emoji">🙂</span>
+                        <span>İyi</span>
+                    </button>
+                    <button class="review-option-btn" data-value="meh" onclick="selectSentiment('meh', this)">
+                        <span class="emoji">😐</span>
+                        <span>Eh işte</span>
+                    </button>
+                    <button class="review-option-btn" data-value="bad" onclick="selectSentiment('bad', this)">
+                        <span class="emoji">😕</span>
+                        <span>Beğenmedim</span>
+                    </button>
+                    <button class="review-option-btn" data-value="terrible" onclick="selectSentiment('terrible', this)">
+                        <span class="emoji">🤮</span>
+                        <span>Berbattı</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Kart 2: Stil / Mekan Tipi -->
+            <div class="review-card" data-step="2">
+                <h4>Mekan nasıl bir yerdi?</h4>
+                <p class="text-muted small">Birden fazla seçebilirsin</p>
+                <div class="review-options multi-select">
+                    <button class="review-option-btn" data-value="butik" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">🏠</span>
+                        <span>Butik</span>
+                    </button>
+                    <button class="review-option-btn" data-value="modern" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">🏙</span>
+                        <span>Modern</span>
+                    </button>
+                    <button class="review-option-btn" data-value="mahalle" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">🧱</span>
+                        <span>Mahalle</span>
+                    </button>
+                    <button class="review-option-btn" data-value="dogal" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">🌿</span>
+                        <span>Doğal</span>
+                    </button>
+                    <button class="review-option-btn" data-value="is-odakli" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">💼</span>
+                        <span>İş odaklı</span>
+                    </button>
+                    <button class="review-option-btn" data-value="populer" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">🔥</span>
+                        <span>Popüler</span>
+                    </button>
+                    <button class="review-option-btn" data-value="instagramlik" onclick="toggleMultiSelect(this, 'tags')">
+                        <span class="emoji">📸</span>
+                        <span>Instagramlık</span>
+                    </button>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
+            </div>
+            
+            <!-- Kart 3: Kiminle Gidilir -->
+            <div class="review-card" data-step="3">
+                <h4>Sence kimlerle gidilir?</h4>
+                <p class="text-muted small">Birden fazla seçebilirsin</p>
+                <div class="review-options multi-select">
+                    <button class="review-option-btn" data-value="sevgili" onclick="toggleMultiSelect(this, 'suitable_for')">
+                        <span class="emoji">❤️</span>
+                        <span>Sevgili</span>
+                    </button>
+                    <button class="review-option-btn" data-value="arkadas" onclick="toggleMultiSelect(this, 'suitable_for')">
+                        <span class="emoji">👯</span>
+                        <span>Arkadaş</span>
+                    </button>
+                    <button class="review-option-btn" data-value="aile" onclick="toggleMultiSelect(this, 'suitable_for')">
+                        <span class="emoji">👨‍👩‍👧</span>
+                        <span>Aile</span>
+                    </button>
+                    <button class="review-option-btn" data-value="is" onclick="toggleMultiSelect(this, 'suitable_for')">
+                        <span class="emoji">🧑‍💻</span>
+                        <span>İş için</span>
+                    </button>
+                    <button class="review-option-btn" data-value="tek" onclick="toggleMultiSelect(this, 'suitable_for')">
+                        <span class="emoji">🙇‍♂️</span>
+                        <span>Tek başına</span>
+                    </button>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
+            </div>
+            
+            <!-- Kart 4: Ortam / Atmosfer -->
+            <div class="review-card" data-step="4">
+                <h4>Ortam nasıldı?</h4>
+                <p class="text-muted small">Birden fazla seçebilirsin</p>
+                <div class="review-options multi-select">
+                    <button class="review-option-btn" data-value="sessiz" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">🤫</span>
+                        <span>Sessiz</span>
+                    </button>
+                    <button class="review-option-btn" data-value="muzikli" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">🎶</span>
+                        <span>Müzikli</span>
+                    </button>
+                    <button class="review-option-btn" data-value="kalabalik" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">🗣</span>
+                        <span>Kalabalık</span>
+                    </button>
+                    <button class="review-option-btn" data-value="rahat" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">🛋</span>
+                        <span>Rahat</span>
+                    </button>
+                    <button class="review-option-btn" data-value="estetik" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">📸</span>
+                        <span>Estetik</span>
+                    </button>
+                    <button class="review-option-btn" data-value="luks" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">💸</span>
+                        <span>Lüks</span>
+                    </button>
+                    <button class="review-option-btn" data-value="uygun" onclick="toggleMultiSelect(this, 'atmosphere')">
+                        <span class="emoji">💰</span>
+                        <span>Uygun fiyatlı</span>
+                    </button>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
+            </div>
+            
+            <!-- Kart 5: Kısa Yorum -->
+            <div class="review-card" data-step="5">
+                <h4>Bir cümle de senden?</h4>
+                <p class="text-muted small">İsteğe bağlı</p>
+                <textarea 
+                    id="reviewComment" 
+                    class="form-control" 
+                    rows="4" 
+                    placeholder="Mesela: kahve çok iyiydi, servis yavaştı..."
+                ></textarea>
+                <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
+                <button class="btn btn-outline-secondary mt-2" onclick="nextStep()">Atla</button>
+            </div>
+            
+            <!-- Kart 6: Puan -->
+            <div class="review-card" data-step="6">
+                <h4>Puanın?</h4>
+                <p class="text-muted small">İsteğe bağlı</p>
+                <div class="rating-container">
+                    <div class="star-rating" id="starRating">
+                        <button class="star-btn" data-rating="1" onclick="selectRating(1)">
+                            <i class="bi bi-star"></i>
+                        </button>
+                        <button class="star-btn" data-rating="2" onclick="selectRating(2)">
+                            <i class="bi bi-star"></i>
+                        </button>
+                        <button class="star-btn" data-rating="3" onclick="selectRating(3)">
+                            <i class="bi bi-star"></i>
+                        </button>
+                        <button class="star-btn" data-rating="4" onclick="selectRating(4)">
+                            <i class="bi bi-star"></i>
+                        </button>
+                        <button class="star-btn" data-rating="5" onclick="selectRating(5)">
+                            <i class="bi bi-star"></i>
+                        </button>
+                    </div>
+                    <p class="rating-text" id="ratingText">Puan seç (opsiyonel)</p>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="submitReview()">Gönder</button>
+                <button class="btn btn-outline-secondary mt-2" onclick="submitReview()">Puan vermeden gönder</button>
+            </div>
+            
+            <!-- Kart 7: Gamification -->
+            <div class="review-card" data-step="7">
+                <div class="gamification-screen">
+                    <div class="celebration-emoji">🎉</div>
+                    <h3>Teşekkürler!</h3>
+                    <div class="points-earned">
+                        <span class="points-number" id="pointsEarned">+10</span>
+                        <span class="points-label">puan eklendi</span>
+                    </div>
+                    <p class="info-text">
+                        Bu değerlendirme profilinde <strong>'Gittiğim Yerler'</strong> kısmında görünecek.
+                    </p>
+                    <button class="btn btn-primary mt-3" onclick="closeReviewModal(true)">Tamam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.review-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1050;
+}
+
+.review-modal.show {
+    display: flex;
+}
+
+.review-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.review-modal-content {
+    position: relative;
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    margin: auto;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.review-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.review-progress {
+    padding: 15px 20px;
+    background: #f8f9fa;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #0d6efd;
+    transition: width 0.3s ease;
+    width: 16.66%;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+    display: block;
+}
+
+.review-cards {
+    position: relative;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+.review-card {
+    position: absolute;
+    width: 100%;
+    padding: 30px 20px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.review-card.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.review-card h4 {
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.review-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.review-option-btn {
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.review-option-btn:hover {
+    border-color: #0d6efd;
+    background: #f0f7ff;
+}
+
+.review-option-btn.selected {
+    border-color: #0d6efd;
+    background: #0d6efd;
+    color: white;
+}
+
+.review-option-btn .emoji {
+    font-size: 24px;
+}
+
+.rating-container {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.star-rating {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    font-size: 40px;
+    color: #ffc107;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.star-btn:hover {
+    transform: scale(1.2);
+}
+
+.star-btn.active .bi-star-fill {
+    display: inline;
+}
+
+.star-btn .bi-star-fill {
+    display: none;
+}
+
+.star-btn.active .bi-star {
+    display: none;
+}
+
+.rating-text {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.gamification-screen {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.celebration-emoji {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.points-earned {
+    margin: 30px 0;
+}
+
+.points-number {
+    font-size: 48px;
+    font-weight: bold;
+    color: #0d6efd;
+    display: block;
+}
+
+.points-label {
+    font-size: 18px;
+    color: #6c757d;
+}
+
+.info-text {
+    color: #6c757d;
+    margin-top: 20px;
+}
+
+@media (max-width: 576px) {
+    .review-modal-content {
+        max-height: 95vh;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .review-options {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+let currentStep = 1;
+let reviewData = {
+    sentiment: '',
+    tags: [],
+    suitable_for: [],
+    atmosphere: [],
+    comment: '',
+    rating: null
+};
+let currentPlaceId = null;
+let isUpdating = false;
+
+function openReviewModal(placeId, updating = false) {
+    currentPlaceId = placeId;
+    isUpdating = updating;
+    currentStep = 1;
+    reviewData = {
+        sentiment: '',
+        tags: [],
+        suitable_for: [],
+        atmosphere: [],
+        comment: '',
+        rating: null
+    };
+    
+    // Timer'ı temizle
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+    }
+    
+    // Place name'i al
+    fetch(`/api/places/${placeId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('reviewPlaceName').textContent = data.name;
+        })
+        .catch(err => console.error('Error fetching place:', err));
+    
+    document.getElementById('reviewModal').classList.add('show');
+    updateProgress();
+    resetCards();
+}
+
+function closeReviewModal(reload = false) {
+    // Timer'ı temizle
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+    }
+    
+    if (currentStep < 7 && !confirm('Değerlendirmeyi tamamlamadan çıkmak üzeresin. Emin misin?')) {
+        return;
+    }
+    
+    document.getElementById('reviewModal').classList.remove('show');
+    if (reload) {
+        setTimeout(() => location.reload(), 500);
+    }
+}
+
+function selectSentiment(value, element) {
+    reviewData.sentiment = value;
+    document.querySelectorAll('[data-step="1"] .review-option-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    if (element) {
+        element.classList.add('selected');
+    }
+    setTimeout(() => nextStep(), 300);
+}
+
+let autoNextTimer = null;
+
+function toggleMultiSelect(btn, field) {
+    const value = btn.getAttribute('data-value');
+    const index = reviewData[field].indexOf(value);
+    
+    if (index > -1) {
+        reviewData[field].splice(index, 1);
+        btn.classList.remove('selected');
+    } else {
+        reviewData[field].push(value);
+        btn.classList.add('selected');
+    }
+    
+    // Eğer ilk seçim yapıldıysa ve henüz seçim yoksa, otomatik geçiş için timer başlat
+    if (reviewData[field].length === 1 && currentStep >= 2 && currentStep <= 4) {
+        // Önceki timer'ı iptal et
+        if (autoNextTimer) {
+            clearTimeout(autoNextTimer);
+        }
+        // 1.5 saniye sonra otomatik geçiş
+        autoNextTimer = setTimeout(() => {
+            if (reviewData[field].length > 0) {
+                nextStep();
+            }
+        }, 1500);
+    } else if (reviewData[field].length === 0) {
+        // Seçim kaldırıldıysa timer'ı iptal et
+        if (autoNextTimer) {
+            clearTimeout(autoNextTimer);
+            autoNextTimer = null;
+        }
+    }
+}
+
+function selectRating(rating) {
+    reviewData.rating = rating;
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('active');
+            star.innerHTML = '<i class="bi bi-star-fill"></i>';
+        } else {
+            star.classList.remove('active');
+            star.innerHTML = '<i class="bi bi-star"></i>';
+        }
+    });
+    
+    const texts = ['', 'Çok kötü', 'Kötü', 'Orta', 'İyi', 'Mükemmel'];
+    document.getElementById('ratingText').textContent = texts[rating] || 'Puan seç (opsiyonel)';
+}
+
+function nextStep() {
+    // Timer'ı iptal et
+    if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+    }
+    
+    if (currentStep < 6) {
+        // Yorumu kaydet
+        if (currentStep === 5) {
+            reviewData.comment = document.getElementById('reviewComment').value;
+        }
+        
+        currentStep++;
+        updateProgress();
+        showCard(currentStep);
+    }
+}
+
+function showCard(step) {
+    document.querySelectorAll('.review-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    document.querySelector(`[data-step="${step}"]`).classList.add('active');
+}
+
+function resetCards() {
+    document.querySelectorAll('.review-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    document.querySelector('[data-step="1"]').classList.add('active');
+}
+
+function updateProgress() {
+    const progress = (currentStep / 7) * 100;
+    document.getElementById('reviewProgress').style.width = progress + '%';
+    document.getElementById('reviewProgressText').textContent = `${currentStep} / 7`;
+}
+
+async function submitReview() {
+    // Rating'i kaydet
+    if (!reviewData.rating || reviewData.rating === 0) {
+        reviewData.rating = null;
+    }
+    
+    // Yorumu kaydet
+    const commentField = document.getElementById('reviewComment');
+    if (commentField) {
+        reviewData.comment = commentField.value || '';
+    }
+    
+    // Debug: reviewData'yı konsola yazdır
+    console.log('Submitting review data:', reviewData);
+    console.log('Place ID:', currentPlaceId);
+    
+    // Loading göster
+    const submitBtn = event?.target || document.querySelector('[data-step="6"] .btn-primary');
+    const originalText = submitBtn?.textContent;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Gönderiliyor...';
+    }
+    
+    try {
+        // CSRF token'ı al
+        let csrftoken = getCookie('csrftoken');
+        
+        // Eğer hala yoksa, Django'nun CSRF token input'undan al
+        if (!csrftoken) {
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfInput) {
+                csrftoken = csrfInput.value;
+            }
+        }
+        
+        if (!csrftoken) {
+            console.warn('CSRF token bulunamadı, istek gönderiliyor...');
+        }
+        
+        const response = await fetch(`/api/places/${currentPlaceId}/review/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrftoken && { 'X-CSRFToken': csrftoken })
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(reviewData)
+        });
+        
+        // Response'u bir kez oku
+        const responseText = await response.text();
+        let data;
+        
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            console.error('Response text:', responseText.substring(0, 500));
+            throw new Error(`Sunucudan geçersiz yanıt alındı: ${responseText.substring(0, 200)}`);
+        }
+        
+        if (!response.ok) {
+            const errorMsg = data.error || data.message || data.detail || `HTTP ${response.status}: ${response.statusText}`;
+            console.error('API Error:', data);
+            throw new Error(errorMsg);
+        }
+        
+        if (data.success) {
+            // Gamification ekranını göster
+            document.getElementById('pointsEarned').textContent = `+${data.points_earned || 10}`;
+            currentStep = 7;
+            updateProgress();
+            showCard(7);
+        } else {
+            throw new Error(data.error || data.message || 'Bilinmeyen hata');
+        }
+    } catch (error) {
+        console.error('Error details:', error);
+        console.error('Review data:', reviewData);
+        alert('Bir hata oluştu:\n\n' + error.message + '\n\nLütfen tekrar deneyin veya sayfayı yenileyin.');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    // Eğer cookie'de yoksa, meta tag'den al
+    if (!cookieValue) {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) {
+            cookieValue = csrfMeta.getAttribute('content');
+        }
+    }
+    return cookieValue;
+}
+</script>

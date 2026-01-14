@@ -21,6 +21,9 @@
         .rating-stars {
             color: #ffc107;
         }
+        .navbar .nav-link i {
+            margin-right: 5px;
+        }
         footer {
             background-color: #343a40;
             color: white;
@@ -45,6 +48,11 @@
                         <a class="nav-link" href="{% url 'places:discover' %}">Keşfet</a>
                     </li>
                     {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'places:discover' %}" title="Mekan keşfet ve değerlendir">
+                            <i class="bi bi-star-fill"></i> Değerlendir
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'social:friends_feed' %}">Arkadaş Feed</a>
                     </li>

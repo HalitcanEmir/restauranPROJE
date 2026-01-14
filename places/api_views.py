@@ -52,7 +52,7 @@ class PlaceDetailAPIView(generics.RetrieveAPIView):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def AddReviewAPIView(request, place_id):
-    """Değerlendirme ekleme API"""
+    """Kart tabanlı değerlendirme ekleme API"""
     try:
         place = Place.objects.get(id=place_id)
     except Place.DoesNotExist:
@@ -68,29 +68,81 @@ def AddReviewAPIView(request, place_id):
         visit = None
     
     if request.method == 'POST':
-        data = request.data.copy()
-        data['user'] = request.user.id
-        data['place'] = place.id
-        
-        form = VisitForm(data, instance=visit)
-        if form.is_valid():
-            visit = form.save(commit=False)
-            visit.user = request.user
-            visit.place = place
-            visit.save()
+        try:
+            data = request.data
             
-            # UserScore'u güncelle
+            # Yeni alanları al
+            sentiment = data.get('sentiment', '') or None
+            tags = data.get('tags', [])
+            suitable_for = data.get('suitable_for', [])
+            atmosphere = data.get('atmosphere', [])
+            comment = data.get('comment', '') or ''
+            rating = data.get('rating', None)
+            
+            # Rating'i integer'a çevir (varsa)
+            if rating is not None and rating != '':
+                try:
+                    rating = int(rating)
+                except (ValueError, TypeError):
+                    rating = None
+            else:
+                rating = None
+            
+            # Validasyon - en az sentiment veya rating olmalı
+            if not sentiment and not rating:
+                return Response(
+                    {'success': False, 'error': 'En az sentiment veya rating gerekli'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Visit oluştur veya güncelle
+            if visit is None:
+                visit = Visit.objects.create(
+                    user=request.user,
+                    place=place,
+                    sentiment=sentiment,
+                    tags=tags if isinstance(tags, list) else [],
+                    suitable_for=suitable_for if isinstance(suitable_for, list) else [],
+                    atmosphere=atmosphere if isinstance(atmosphere, list) else [],
+                    comment=comment,
+                    rating=rating,
+                )
+            else:
+                if sentiment:
+                    visit.sentiment = sentiment
+                if tags:
+                    visit.tags = tags if isinstance(tags, list) else visit.tags
+                if suitable_for:
+                    visit.suitable_for = suitable_for if isinstance(suitable_for, list) else visit.suitable_for
+                if atmosphere:
+                    visit.atmosphere = atmosphere if isinstance(atmosphere, list) else visit.atmosphere
+                if comment:
+                    visit.comment = comment
+                if rating:
+                    visit.rating = rating
+                visit.save()
+            
+            # UserScore'u güncelle (+10 puan)
             from social.models import UserScore
             score, created = UserScore.objects.get_or_create(user=request.user)
             score.city = request.user.profile.city or ''
-            score.calculate_score()
+            score.total_points += 10  # Her değerlendirme için +10 puan
+            score.save()
             
             return Response({
                 'success': True,
                 'message': 'Değerlendirme başarıyla kaydedildi',
-                'visit_id': visit.id
+                'visit_id': visit.id,
+                'points_earned': 10,
+                'total_points': score.total_points
             }, status=status.HTTP_201_CREATED)
-        else:
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            import traceback
+            return Response({
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response({'error': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

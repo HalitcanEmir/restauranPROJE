@@ -4,7 +4,7 @@ from .models import Visit
 
 
 class VisitForm(forms.ModelForm):
-    """Ziyaret/Değerlendirme formu"""
+    """Ziyaret/Değerlendirme formu (Eski form - backward compatibility)"""
     def clean_mood_tags(self):
         """Mood tags JSON validasyonu"""
         mood_tags = self.cleaned_data.get('mood_tags')
@@ -19,11 +19,8 @@ class VisitForm(forms.ModelForm):
     
     class Meta:
         model = Visit
-        fields = ['visited_at', 'with_whom', 'rating', 'comment', 'mood_tags']
+        fields = ['with_whom', 'rating', 'comment', 'mood_tags']  # visited_at kaldırıldı (auto_now_add)
         widgets = {
-            'visited_at': forms.DateTimeInput(
-                attrs={'type': 'datetime-local', 'class': 'form-control'}
-            ),
             'with_whom': forms.Select(attrs={'class': 'form-control'}),
             'rating': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -42,7 +39,6 @@ class VisitForm(forms.ModelForm):
             }),
         }
         labels = {
-            'visited_at': 'Ziyaret Tarihi',
             'with_whom': 'Kiminle Gittiniz?',
             'rating': 'Puan (1-5)',
             'comment': 'Yorum',
