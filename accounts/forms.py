@@ -9,12 +9,18 @@ User = get_user_model()
 class RegisterForm(forms.ModelForm):
     """Kayıt formu"""
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'En az 8 karakter'
+        }),
         label='Şifre',
         min_length=8
     )
     password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Şifrenizi tekrar girin'
+        }),
         label='Şifre Tekrar'
     )
     
@@ -22,8 +28,14 @@ class RegisterForm(forms.ModelForm):
         model = User
         fields = ['username', 'email']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Kullanıcı adınızı girin'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ornek@email.com'
+            }),
         }
         labels = {
             'username': 'Kullanıcı Adı',
