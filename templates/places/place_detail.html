@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ place.name }} - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">{{ place.name }}</h1>
+                <p class="text-muted">
+                    <i class="bi bi-geo-alt"></i> {{ place.address }}, {{ place.city }}
+                </p>
+                <p class="card-text">{{ place.description }}</p>
+                
+                <div class="mb-3">
+                    <strong>Kategoriler:</strong>
+                    {% for cat in place.categories %}
+                        <span class="badge bg-primary">{{ cat }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Etiketler:</strong>
+                    {% for tag in place.tags %}
+                        <span class="badge bg-info">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Fiyat Seviyesi:</strong> 
+                    <span class="badge bg-secondary">{{ place.price_level }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Ortalama Puan:</strong>
+                    <span class="rating-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= average_rating|floatformat:0 %}
+                                <i class="bi bi-star-fill"></i>
+                            {% else %}
+                                <i class="bi bi-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <strong>{{ average_rating|floatformat:1 }}</strong> / 5.0
+                    <small class="text-muted">({{ total_visits }} değerlendirme)</small>
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="mt-4">
+                    {% if user_visit %}
+                        <a href="{% url 'places:add_review' place.id %}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Değerlendirmemi Güncelle
+                        </a>
+                    {% else %}
+                        <a href="{% url 'places:add_review' place.id %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Ben de Gittim - Değerlendir
+                        </a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mt-4">
+                    Değerlendirme yapmak için <a href="{% url 'accounts:login' %}">giriş yapın</a>.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="bi bi-chat-left-text"></i> Değerlendirmeler</h5>
+            </div>
+            <div class="card-body">
+                {% if visits %}
+                    {% for visit in visits %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ visit.user.username }}</strong>
+                            <small class="text-muted">{{ visit.visited_at|date:"d M Y H:i" }}</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= visit.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="badge bg-secondary">{{ visit.get_with_whom_display }}</span>
+                        </div>
+                        {% if visit.comment %}
+                        <p>{{ visit.comment }}</p>
+                        {% endif %}
+                        {% if visit.mood_tags %}
+                        <div>
+                            {% for tag in visit.mood_tags %}
+                                <span class="badge bg-info">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Henüz değerlendirme yapılmamış.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>İstatistikler</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Toplam Ziyaret:</strong> {{ total_visits }}</p>
+                <p><strong>Ortalama Puan:</strong> {{ average_rating|floatformat:1 }} / 5.0</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

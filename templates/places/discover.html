@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Keşfet - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-funnel"></i> Filtreler</h5>
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="mb-3">
+                        <label class="form-label">Şehir</label>
+                        <input type="text" name="city" class="form-control" value="{{ city }}" placeholder="İstanbul">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select name="category" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="kafe" {% if category == 'kafe' %}selected{% endif %}>Kafe</option>
+                            <option value="restoran" {% if category == 'restoran' %}selected{% endif %}>Restoran</option>
+                            <option value="bar" {% if category == 'bar' %}selected{% endif %}>Bar</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mod</label>
+                        <select name="mode" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="sevgili" {% if mode == 'sevgili' %}selected{% endif %}>Sevgiliyle</option>
+                            <option value="aile" {% if mode == 'aile' %}selected{% endif %}>Aileyle</option>
+                            <option value="dost" {% if mode == 'dost' %}selected{% endif %}>Arkadaşlarla</option>
+                            <option value="tek" {% if mode == 'tek' %}selected{% endif %}>Tek Başıma</option>
+                            <option value="is" {% if mode == 'is' %}selected{% endif %}>İş</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ara</label>
+                        <input type="text" name="search" class="form-control" value="{{ search }}" placeholder="Mekan adı...">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filtrele
+                    </button>
+                    <a href="{% url 'places:discover' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        Temizle
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <h2 class="mb-4">
+            <i class="bi bi-compass"></i> Mekanlar
+            <small class="text-muted">({{ places.count }} mekan bulundu)</small>
+        </h2>
+        
+        {% if places %}
+        <div class="row">
+            {% for place in places %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{% url 'places:place_detail' place.id %}" class="text-decoration-none">
+                                {{ place.name }}
+                            </a>
+                        </h5>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-geo-alt"></i> {{ place.city }} - {{ place.address }}
+                        </p>
+                        <p class="card-text">{{ place.description|truncatewords:20 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="rating-stars">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= place.avg_rating|floatformat:0 %}
+                                            <i class="bi bi-star-fill"></i>
+                                        {% else %}
+                                            <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <small class="text-muted">({{ place.avg_rating|floatformat:1 }})</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary">{{ place.price_level }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            {% for tag in place.tags|slice:":3" %}
+                                <span class="badge bg-info">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'places:place_detail' place.id %}" class="btn btn-sm btn-primary">
+                            Detayları Gör <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Henüz mekan bulunamadı. Filtreleri değiştirmeyi deneyin.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

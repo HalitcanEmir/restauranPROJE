@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Değerlendirme Ekle - {{ place.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="bi bi-star"></i> 
+                    {% if is_update %}Değerlendirmeni Güncelle{% else %}Değerlendirme Ekle{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <h5 class="mb-4">{{ place.name }}</h5>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.visited_at.label }}</label>
+                        {{ form.visited_at }}
+                        {% if form.visited_at.errors %}
+                            <div class="text-danger">{{ form.visited_at.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.with_whom.label }}</label>
+                        {{ form.with_whom }}
+                        {% if form.with_whom.errors %}
+                            <div class="text-danger">{{ form.with_whom.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.rating.label }}</label>
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <div class="text-danger">{{ form.rating.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.comment.label }}</label>
+                        {{ form.comment }}
+                        {% if form.comment.errors %}
+                            <div class="text-danger">{{ form.comment.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.mood_tags.label }}</label>
+                        {{ form.mood_tags }}
+                        <small class="form-text text-muted">JSON formatında girin: ["samimi", "sessiz"]</small>
+                        {% if form.mood_tags.errors %}
+                            <div class="text-danger">{{ form.mood_tags.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Kaydet
+                        </button>
+                        <a href="{% url 'places:place_detail' place.id %}" class="btn btn-secondary">
+                            İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

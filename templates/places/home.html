@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Ana Sayfa - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card text-center">
+            <div class="card-body py-5">
+                <h1 class="display-4 mb-4">
+                    <i class="bi bi-geo-alt-fill text-primary"></i> MekanKeşif
+                </h1>
+                <p class="lead mb-4">Kafe ve restoran keşfetmenin sosyal yolu</p>
+                
+                {% if not user.is_authenticated %}
+                <div class="mb-4">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-person-plus"></i> Kayıt Ol
+                    </a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
+                    </a>
+                </div>
+                {% else %}
+                <div class="mb-4">
+                    <h3>Nasıl bir mekan arıyorsunuz?</h3>
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}?mode=sevgili" class="btn btn-outline-danger w-100 py-3">
+                                <i class="bi bi-heart-fill"></i><br>Sevgiliyle
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}?mode=aile" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-people-fill"></i><br>Aileyle
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}?mode=dost" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-person-friends"></i><br>Arkadaşlarla
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}?mode=tek" class="btn btn-outline-secondary w-100 py-3">
+                                <i class="bi bi-person"></i><br>Tek Başıma
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}?mode=is" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-briefcase-fill"></i><br>İş
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'places:discover' %}" class="btn btn-primary w-100 py-3">
+                                <i class="bi bi-search"></i><br>Tümünü Keşfet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

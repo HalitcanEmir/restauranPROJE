@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Arkadaş Feed - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="bi bi-activity"></i> Arkadaş Feed
+        </h2>
+        
+        {% if visits %}
+            {% for visit in visits %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <strong>
+                                <a href="{% url 'accounts:profile' username=visit.user.username %}" class="text-decoration-none">
+                                    {{ visit.user.username }}
+                                </a>
+                            </strong>
+                            <span class="text-muted">dün</span>
+                            <a href="{% url 'places:place_detail' visit.place.id %}" class="text-decoration-none">
+                                {{ visit.place.name }}
+                            </a>
+                            <span class="text-muted">'e gitti ve</span>
+                            <span class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= visit.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <strong>{{ visit.rating }}/5</strong> puan verdi
+                        </div>
+                        <small class="text-muted">{{ visit.visited_at|date:"d M Y H:i" }}</small>
+                    </div>
+                    
+                    {% if visit.comment %}
+                    <p class="mb-2">{{ visit.comment }}</p>
+                    {% endif %}
+                    
+                    <div>
+                        <span class="badge bg-secondary">{{ visit.get_with_whom_display }}</span>
+                        {% for tag in visit.mood_tags %}
+                            <span class="badge bg-info">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Henüz arkadaş feed'inizde aktivite yok. 
+                <a href="{% url 'social:friends_list' %}">Arkadaş ekleyin</a> veya 
+                <a href="{% url 'places:discover' %}">mekan keşfedin</a>!
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
