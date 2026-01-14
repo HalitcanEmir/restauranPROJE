@@ -44,7 +44,13 @@ def discover(request):
     
     # Ortalama puanları hesapla
     for place in places:
-        place.avg_rating = place.average_rating
+        avg = place.average_rating
+        place.avg_rating = avg if avg else 0
+        # Tam sayı kısmını al (None kontrolü ile)
+        try:
+            place.avg_rating_int = int(float(avg)) if avg else 0
+        except (ValueError, TypeError):
+            place.avg_rating_int = 0
         place.visit_count = place.total_visits
     
     context = {
@@ -118,3 +124,15 @@ def add_review(request, place_id):
         'is_update': is_update,
     }
     return render(request, 'places/add_review.html', context)
+
+
+@login_required
+def discover_swipe(request):
+    """Swipe keşfet sayfası"""
+    return render(request, 'places/discover_swipe.html')
+
+
+@login_required
+def favorites(request):
+    """Favori listeleri sayfası"""
+    return render(request, 'places/favorites.html')

@@ -1,0 +1,159 @@
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.db.models import Q, Exists, OuterRef
+from .models import Place, PlacePreference
+from .serializers import PlaceSerializer
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def discover_places(request):
+    """
+    Keşfet sayfası için mekan kartlarını getirir
+    Kullanıcının daha önce swipe yaptığı mekanları filtreler
+    """
+    user = request.user
+    
+    # Filtreler
+    category = request.query_params.get('category', None)
+    price_level = request.query_params.get('price_level', None)
+    atmosphere = request.query_params.get('atmosphere', None)
+    suitable_for = request.query_params.get('suitable_for', None)
+    city = request.query_params.get('city', None)
+    
+    # Kullanıcının daha önce swipe yaptığı mekanları al
+    swiped_place_ids = PlacePreference.objects.filter(
+        user=user
+    ).values_list('place_id', flat=True)
+    
+    # Swipe yapılmamış mekanları getir
+    places = Place.objects.exclude(id__in=swiped_place_ids)
+    
+    # Filtreler
+    if category:
+        places = places.filter(categories__contains=[category])
+    
+    if price_level:
+        places = places.filter(price_level=price_level)
+    
+    if atmosphere:
+        places = places.filter(tags__contains=[atmosphere])
+    
+    if suitable_for:
+        places = places.filter(categories__contains=[suitable_for])
+    
+    if city:
+        places = places.filter(city__icontains=city)
+    
+    # Fotoğrafı olan mekanları önceliklendir
+    places = places.order_by('-created_at')
+    
+    # Serialize et
+    serializer = PlaceSerializer(places[:20], many=True)  # İlk 20 mekan
+    
+    return Response({
+        'success': True,
+        'places': serializer.data,
+        'count': len(serializer.data)
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def swipe_place(request):
+    """
+    Kullanıcının swipe işlemini kaydeder
+    body: {
+        place_id: int,
+        action: "like" | "dislike" | "save"
+    }
+    """
+    user = request.user
+    place_id = request.data.get('place_id')
+    action = request.data.get('action')
+    
+    # Validasyon
+    if not place_id:
+        return Response(
+            {'success': False, 'error': 'place_id gerekli'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if action not in ['like', 'dislike', 'save']:
+        return Response(
+            {'success': False, 'error': 'action geçersiz. like, dislike veya save olmalı'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        place = Place.objects.get(id=place_id)
+    except Place.DoesNotExist:
+        return Response(
+            {'success': False, 'error': 'Mekan bulunamadı'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Preference oluştur veya güncelle
+    preference, created = PlacePreference.objects.update_or_create(
+        user=user,
+        place=place,
+        defaults={'action': action}
+    )
+    
+    # UserScore'a puan ekle (like için +5, save için +3)
+    if action == 'like':
+        from social.models import UserScore
+        score, _ = UserScore.objects.get_or_create(user=user)
+        score.city = user.profile.city or ''
+        score.total_points += 5
+        score.save()
+        points_earned = 5
+    elif action == 'save':
+        from social.models import UserScore
+        score, _ = UserScore.objects.get_or_create(user=user)
+        score.city = user.profile.city or ''
+        score.total_points += 3
+        score.save()
+        points_earned = 3
+    else:
+        points_earned = 0
+    
+    return Response({
+        'success': True,
+        'message': f'Mekan {preference.get_action_display()} olarak kaydedildi',
+        'action': action,
+        'points_earned': points_earned,
+        'created': created
+    }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_preferences(request):
+    """
+    Kullanıcının favori listelerini getirir
+    """
+    user = request.user
+    action = request.query_params.get('action', None)  # like, dislike, save
+    
+    if action and action not in ['like', 'dislike', 'save']:
+        return Response(
+            {'success': False, 'error': 'Geçersiz action'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if action:
+        preferences = PlacePreference.objects.filter(user=user, action=action)
+    else:
+        preferences = PlacePreference.objects.filter(user=user)
+    
+    places = [pref.place for pref in preferences]
+    serializer = PlaceSerializer(places, many=True)
+    
+    return Response({
+        'success': True,
+        'places': serializer.data,
+        'count': len(serializer.data)
+    })

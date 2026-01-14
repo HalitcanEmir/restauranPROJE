@@ -75,14 +75,14 @@
                             <div>
                                 <span class="rating-stars">
                                     {% for i in "12345" %}
-                                        {% if forloop.counter <= place.avg_rating|floatformat:0 %}
+                                        {% if forloop.counter <= place.avg_rating_int %}
                                             <i class="bi bi-star-fill"></i>
                                         {% else %}
                                             <i class="bi bi-star"></i>
                                         {% endif %}
                                     {% endfor %}
                                 </span>
-                                <small class="text-muted">({{ place.avg_rating|floatformat:1 }})</small>
+                                <small class="text-muted ms-1">({{ place.avg_rating|floatformat:1 }})</small>
                             </div>
                             <div>
                                 <span class="badge bg-secondary">{{ place.price_level }}</span>

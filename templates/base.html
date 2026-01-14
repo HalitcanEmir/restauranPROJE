@@ -21,6 +21,12 @@
         .rating-stars {
             color: #ffc107;
         }
+        .rating-stars .bi-star-fill {
+            color: #ffc107 !important;
+        }
+        .rating-stars .bi-star {
+            color: #dee2e6;
+        }
         .navbar .nav-link i {
             margin-right: 5px;
         }
@@ -49,8 +55,18 @@
                     </li>
                     {% if user.is_authenticated %}
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'places:discover_swipe' %}" title="Swipe ile keşfet">
+                            <i class="bi bi-arrow-left-right"></i> Swipe
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'places:discover' %}" title="Mekan keşfet ve değerlendir">
                             <i class="bi bi-star-fill"></i> Değerlendir
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'places:favorites' %}">
+                            <i class="bi bi-heart"></i> Favorilerim
                         </a>
                     </li>
                     <li class="nav-item">

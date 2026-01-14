@@ -19,17 +19,25 @@ class PlaceSerializer(serializers.ModelSerializer):
     """Mekan listesi serializer"""
     average_rating = serializers.SerializerMethodField()
     total_visits = serializers.SerializerMethodField()
+    first_photo = serializers.SerializerMethodField()
     
     class Meta:
         model = Place
-        fields = ['id', 'name', 'description', 'address', 'city', 'categories', 'tags', 
-                  'price_level', 'average_rating', 'total_visits']
+        fields = ['id', 'name', 'description', 'short_description', 'address', 'city', 
+                  'categories', 'tags', 'price_level', 'average_rating', 'total_visits',
+                  'photos', 'first_photo', 'featured_features', 'hours', 'menu_link']
     
     def get_average_rating(self, obj):
         return obj.average_rating
     
     def get_total_visits(self, obj):
         return obj.total_visits
+    
+    def get_first_photo(self, obj):
+        """İlk fotoğrafı döndür (swipe kartı için)"""
+        if obj.photos and len(obj.photos) > 0:
+            return obj.photos[0]
+        return None
 
 
 class PlaceDetailSerializer(serializers.ModelSerializer):

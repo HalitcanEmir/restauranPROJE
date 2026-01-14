@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+
+{% block title %}Keşfet - Swipe{% endblock %}
+
+{% block extra_css %}
+<style>
+.swipe-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    height: 600px;
+    margin: 20px auto;
+    perspective: 1000px;
+}
+
+.swipe-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    cursor: grab;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    user-select: none;
+}
+
+.swipe-card:active {
+    cursor: grabbing;
+}
+
+.swipe-card.swiping {
+    transition: none;
+}
+
+.card-image {
+    width: 100%;
+    height: 60%;
+    object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+}
+
+.card-content {
+    padding: 20px;
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.card-description {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.card-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.feature-badge {
+    background: #f0f0f0;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-level {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.swipe-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    font-size: 48px;
+    font-weight: bold;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 10;
+}
+
+.swipe-overlay.like {
+    color: #4CAF50;
+    opacity: 1;
+}
+
+.swipe-overlay.dislike {
+    color: #f44336;
+    opacity: 1;
+}
+
+.swipe-overlay.save {
+    color: #2196F3;
+    opacity: 1;
+}
+
+.action-buttons {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 100;
+}
+
+.action-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.action-btn:active {
+    transform: scale(0.9);
+}
+
+.btn-dislike {
+    background: #f44336;
+    color: white;
+}
+
+.btn-like {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-save {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-detail {
+    background: #FF9800;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state h3 {
+    margin-bottom: 20px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4 text-center">
+                <i class="bi bi-compass"></i> Keşfet
+            </h2>
+            
+            <div id="swipeContainer" class="swipe-container">
+                <div class="loading" id="loadingState">
+                    <i class="bi bi-hourglass-split"></i> Mekanlar yükleniyor...
+                </div>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <h3>🎉 Tüm mekanları gördün!</h3>
+                    <p>Filtreleri değiştirerek daha fazla mekan keşfedebilirsin.</p>
+                    <a href="{% url 'places:discover' %}" class="btn btn-primary mt-3">Liste Görünümüne Dön</a>
+                </div>
+            </div>
+            
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button class="action-btn btn-dislike" onclick="swipeCard('dislike')" title="Beğenmedim">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                <button class="action-btn btn-save" onclick="swipeCard('save')" title="Kaydet">
+                    <i class="bi bi-bookmark"></i>
+                </button>
+                <button class="action-btn btn-detail" onclick="showDetail()" title="Detay">
+                    <i class="bi bi-info-circle"></i>
+                </button>
+                <button class="action-btn btn-like" onclick="swipeCard('like')" title="Beğendim">
+                    <i class="bi bi-heart-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cards = [];
+let currentIndex = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let currentX = 0;
+let currentY = 0;
+let currentCard = null;
+
+// Sayfa yüklendiğinde mekanları getir
+document.addEventListener('DOMContentLoaded', function() {
+    loadPlaces();
+});
+
+async function loadPlaces() {
+    try {
+        const response = await fetch('/api/places/discover/', {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.places.length > 0) {
+            cards = data.places;
+            renderCards();
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'flex';
+        } else {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading places:', error);
+        document.getElementById('loadingState').innerHTML = 
+            '<p class="text-danger">Mekanlar yüklenirken bir hata oluştu.</p>';
+    }
+}
+
+function renderCards() {
+    const container = document.getElementById('swipeContainer');
+    container.innerHTML = '';
+    
+    // Son 3 kartı göster (stack efekti için)
+    const visibleCards = Math.min(3, cards.length - currentIndex);
+    
+    for (let i = 0; i < visibleCards; i++) {
+        const cardIndex = currentIndex + i;
+        if (cardIndex >= cards.length) break;
+        
+        const place = cards[cardIndex];
+        const card = createCard(place, i);
+        container.appendChild(card);
+        
+        if (i === 0) {
+            currentCard = card;
+            setupCardDrag(card);
+        }
+    }
+}
+
+function createCard(place, index) {
+    const card = document.createElement('div');
+    card.className = 'swipe-card';
+    card.dataset.placeId = place.id;
+    card.style.zIndex = 10 - index;
+    card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 10}px)`;
+    
+    const photo = place.first_photo || place.photos?.[0] || null;
+    const imageHtml = photo 
+        ? `<img src="${photo}" class="card-image" alt="${place.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+        : '';
+    
+    card.innerHTML = `
+        <div class="swipe-overlay like">LIKE</div>
+        <div class="swipe-overlay dislike">NOPE</div>
+        <div class="swipe-overlay save">SAVE</div>
+        ${imageHtml}
+        <div class="card-image" style="display: ${photo ? 'none' : 'flex'};">
+            <i class="bi bi-image"></i>
+        </div>
+        <div class="card-content">
+            <div>
+                <h3 class="card-title">${place.name}</h3>
+                <p class="card-description">${place.short_description || place.description || 'Açıklama yok'}</p>
+                ${place.featured_features && place.featured_features.length > 0 ? `
+                    <div class="card-features">
+                        ${place.featured_features.slice(0, 3).map(f => 
+                            `<span class="feature-badge">${f}</span>`
+                        ).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="card-footer">
+                <span class="price-level">${place.price_level || '₺₺'}</span>
+                <span class="badge bg-secondary">${place.city}</span>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function setupCardDrag(card) {
+    card.addEventListener('mousedown', startDrag);
+    card.addEventListener('touchstart', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+}
+
+function startDrag(e) {
+    if (!currentCard) return;
+    isDragging = true;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    currentCard.classList.add('swiping');
+}
+
+function drag(e) {
+    if (!isDragging || !currentCard) return;
+    e.preventDefault();
+    const touch = e.touches ? e.touches[0] : e;
+    currentX = touch.clientX - startX;
+    currentY = touch.clientY - startY;
+    
+    const rotation = currentX * 0.1;
+    currentCard.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
+    
+    // Overlay göster
+    const overlay = currentCard.querySelector('.swipe-overlay');
+    if (Math.abs(currentX) > 50) {
+        if (currentX > 0) {
+            currentCard.querySelector('.swipe-overlay.like').style.opacity = '1';
+            currentCard.querySelector('.swipe-overlay.dislike').style.opacity = '0';
+            currentCard.querySelector('.swipe-overlay.save').style.opacity = '0';
+        } else {
+            currentCard.querySelector('.swipe-overlay.dislike').style.opacity = '1';
+            currentCard.querySelector('.swipe-overlay.like').style.opacity = '0';
+            currentCard.querySelector('.swipe-overlay.save').style.opacity = '0';
+        }
+    } else if (currentY < -50) {
+        currentCard.querySelector('.swipe-overlay.save').style.opacity = '1';
+        currentCard.querySelector('.swipe-overlay.like').style.opacity = '0';
+        currentCard.querySelector('.swipe-overlay.dislike').style.opacity = '0';
+    } else {
+        currentCard.querySelectorAll('.swipe-overlay').forEach(ov => ov.style.opacity = '0');
+    }
+}
+
+function endDrag(e) {
+    if (!isDragging || !currentCard) return;
+    isDragging = false;
+    currentCard.classList.remove('swiping');
+    
+    const threshold = 100;
+    let action = null;
+    
+    if (Math.abs(currentX) > threshold) {
+        action = currentX > 0 ? 'like' : 'dislike';
+    } else if (currentY < -threshold) {
+        action = 'save';
+    }
+    
+    if (action) {
+        performSwipe(action);
+    } else {
+        // Geri dön
+        currentCard.style.transform = '';
+        currentCard.querySelectorAll('.swipe-overlay').forEach(ov => ov.style.opacity = '0');
+    }
+    
+    currentX = 0;
+    currentY = 0;
+}
+
+function swipeCard(action) {
+    if (!currentCard) return;
+    performSwipe(action);
+}
+
+async function performSwipe(action) {
+    if (!currentCard) return;
+    
+    const placeId = currentCard.dataset.placeId;
+    const place = cards.find(p => p.id == placeId);
+    
+    // Animasyon
+    let translateX = 0;
+    let translateY = 0;
+    let rotation = 0;
+    
+    if (action === 'like') {
+        translateX = 500;
+        rotation = 30;
+    } else if (action === 'dislike') {
+        translateX = -500;
+        rotation = -30;
+    } else if (action === 'save') {
+        translateY = -500;
+    }
+    
+    currentCard.style.transition = 'transform 0.3s ease';
+    currentCard.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg)`;
+    currentCard.style.opacity = '0';
+    
+    // API'ye gönder
+    try {
+        const csrftoken = getCookie('csrftoken');
+        const response = await fetch('/api/places/discover/swipe/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrftoken && { 'X-CSRFToken': csrftoken })
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                place_id: parseInt(placeId),
+                action: action
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success && data.points_earned > 0) {
+            // Puan göster (opsiyonel)
+            console.log(`+${data.points_earned} puan kazandınız!`);
+        }
+    } catch (error) {
+        console.error('Swipe error:', error);
+    }
+    
+    // Kartı kaldır ve sonrakine geç
+    setTimeout(() => {
+        currentCard.remove();
+        currentIndex++;
+        
+        if (currentIndex >= cards.length) {
+            // Tüm kartlar bitti
+            document.getElementById('swipeContainer').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('actionButtons').style.display = 'none';
+        } else {
+            renderCards();
+        }
+    }, 300);
+}
+
+function showDetail() {
+    if (!currentCard) return;
+    const placeId = currentCard.dataset.placeId;
+    window.location.href = `/places/${placeId}/`;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

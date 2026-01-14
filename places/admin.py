@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Place
+from .models import Place, PlacePreference
 
 
 @admin.register(Place)
@@ -11,10 +11,13 @@ class PlaceAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Temel Bilgiler', {
-            'fields': ('name', 'description', 'address', 'city')
+            'fields': ('name', 'description', 'short_description', 'address', 'city')
         }),
         ('Kategoriler ve Etiketler', {
             'fields': ('categories', 'tags', 'price_level')
+        }),
+        ('Vitrin Bilgileri', {
+            'fields': ('photos', 'featured_features', 'hours', 'menu_link')
         }),
         ('Konum', {
             'fields': ('latitude', 'longitude')
@@ -26,3 +29,11 @@ class PlaceAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+
+
+@admin.register(PlacePreference)
+class PlacePreferenceAdmin(admin.ModelAdmin):
+    list_display = ['user', 'place', 'action', 'timestamp']
+    list_filter = ['action', 'timestamp']
+    search_fields = ['user__username', 'place__name']
+    readonly_fields = ['timestamp', 'updated_at']

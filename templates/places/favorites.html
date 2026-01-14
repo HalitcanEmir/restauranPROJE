@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Favorilerim - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">
+        <i class="bi bi-heart"></i> Favorilerim
+    </h2>
+    
+    <ul class="nav nav-tabs mb-4" id="favoriteTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="liked-tab" data-bs-toggle="tab" data-bs-target="#liked" type="button">
+                <i class="bi bi-heart-fill text-danger"></i> Beğendiklerim
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved" type="button">
+                <i class="bi bi-bookmark-fill text-primary"></i> Kaydettiklerim
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="disliked-tab" data-bs-toggle="tab" data-bs-target="#disliked" type="button">
+                <i class="bi bi-x-circle text-secondary"></i> Beğenmediklerim
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="favoriteTabContent">
+        <div class="tab-pane fade show active" id="liked" role="tabpanel">
+            <div id="likedPlaces" class="row">
+                <div class="col-12 text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="saved" role="tabpanel">
+            <div id="savedPlaces" class="row">
+                <div class="col-12 text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="disliked" role="tabpanel">
+            <div id="dislikedPlaces" class="row">
+                <div class="col-12 text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadFavorites('like', 'likedPlaces');
+    
+    // Tab değiştiğinde ilgili listeyi yükle
+    document.getElementById('liked-tab').addEventListener('shown.bs.tab', function() {
+        loadFavorites('like', 'likedPlaces');
+    });
+    document.getElementById('saved-tab').addEventListener('shown.bs.tab', function() {
+        loadFavorites('save', 'savedPlaces');
+    });
+    document.getElementById('disliked-tab').addEventListener('shown.bs.tab', function() {
+        loadFavorites('dislike', 'dislikedPlaces');
+    });
+});
+
+async function loadFavorites(action, containerId) {
+    const container = document.getElementById(containerId);
+    
+    try {
+        const response = await fetch(`/api/places/discover/preferences/?action=${action}`, {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.places.length > 0) {
+            container.innerHTML = '';
+            data.places.forEach(place => {
+                const card = createPlaceCard(place);
+                container.appendChild(card);
+            });
+        } else {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle"></i> Henüz ${getActionLabel(action)} yok.
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger text-center">
+                    <i class="bi bi-exclamation-triangle"></i> Bir hata oluştu.
+                </div>
+            </div>
+        `;
+    }
+}
+
+function createPlaceCard(place) {
+    const col = document.createElement('div');
+    col.className = 'col-md-4 mb-4';
+    
+    const photo = place.first_photo || place.photos?.[0] || null;
+    const imageHtml = photo 
+        ? `<img src="${photo}" class="card-img-top" alt="${place.name}" style="height: 200px; object-fit: cover;" onerror="this.style.display='none';">`
+        : '';
+    
+    col.innerHTML = `
+        <div class="card h-100">
+            ${imageHtml}
+            ${!photo ? '<div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;"><i class="bi bi-image text-white" style="font-size: 48px;"></i></div>' : ''}
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="/places/${place.id}/" class="text-decoration-none">${place.name}</a>
+                </h5>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-geo-alt"></i> ${place.city}
+                </p>
+                <p class="card-text">${place.short_description || place.description || ''}</p>
+                ${place.featured_features && place.featured_features.length > 0 ? `
+                    <div class="mb-2">
+                        ${place.featured_features.slice(0, 3).map(f => 
+                            `<span class="badge bg-info me-1">${f}</span>`
+                        ).join('')}
+                    </div>
+                ` : ''}
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-secondary">${place.price_level || '₺₺'}</span>
+                    ${place.average_rating > 0 ? `
+                        <span class="rating-stars">
+                            ${Array.from({length: 5}, (_, i) => 
+                                i < Math.floor(place.average_rating) 
+                                    ? '<i class="bi bi-star-fill"></i>' 
+                                    : '<i class="bi bi-star"></i>'
+                            ).join('')}
+                            <small class="text-muted ms-1">${place.average_rating.toFixed(1)}</small>
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/places/${place.id}/" class="btn btn-sm btn-primary w-100">
+                    Detayları Gör <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function getActionLabel(action) {
+    const labels = {
+        'like': 'beğendiğiniz mekan',
+        'save': 'kaydettiğiniz mekan',
+        'dislike': 'beğenmediğiniz mekan'
+    };
+    return labels[action] || 'mekan';
+}
+</script>
+{% endblock %}
