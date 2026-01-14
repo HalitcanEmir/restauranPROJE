@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Öneriler - MekanKeşif{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">
+        <i class="bi bi-lightbulb"></i> Senin İçin Öneriler
+    </h2>
+    
+    <!-- Filtreler -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtreler</h5>
+        </div>
+        <div class="card-body">
+            <form id="recommendationFilters" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Kategori</label>
+                    <select name="category" class="form-select" id="categoryFilter">
+                        <option value="">Tümü</option>
+                        <option value="kafe">Kafe</option>
+                        <option value="coffee">Kahve</option>
+                        <option value="brunch">Brunch</option>
+                        <option value="restoran">Restoran</option>
+                        <option value="bar">Bar</option>
+                        <option value="tatlı">Tatlı</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Atmosfer</label>
+                    <select name="atmosphere" class="form-select" id="atmosphereFilter">
+                        <option value="">Tümü</option>
+                        <option value="estetik">Estetik</option>
+                        <option value="sakin">Sakin</option>
+                        <option value="canlı">Canlı</option>
+                        <option value="manzaralı">Manzaralı</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Kiminle?</label>
+                    <select name="context" class="form-select" id="contextFilter">
+                        <option value="">Tümü</option>
+                        <option value="friends">Arkadaşlarla</option>
+                        <option value="sevgili">Sevgiliyle</option>
+                        <option value="aile">Aileyle</option>
+                        <option value="tek">Tek Başına</option>
+                        <option value="work">İş</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Bütçe</label>
+                    <select name="price" class="form-select" id="priceFilter">
+                        <option value="">Tümü</option>
+                        <option value="₺">₺ (Ekonomik)</option>
+                        <option value="₺₺">₺₺ (Orta)</option>
+                        <option value="₺₺₺">₺₺₺ (Yüksek)</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-search"></i> Önerileri Getir
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="clearBtn">
+                        <i class="bi bi-x-circle"></i> Temizle
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="tasteProfileBtn">
+                        <i class="bi bi-palette"></i> Zevk Profilimi Kullan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sonuçlar -->
+    <div id="recommendationsContainer">
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+            <p class="mt-3 text-muted">Öneriler hazırlanıyor...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // İlk yüklemede taste profile ile önerileri getir
+    loadRecommendations();
+    
+    // Form submit
+    const form = document.getElementById('recommendationFilters');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submitted');
+            loadRecommendations();
+        });
+    }
+    
+    // Buton event listener'ları
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Submit button clicked');
+            loadRecommendations();
+        });
+    }
+    
+    const tasteProfileBtn = document.getElementById('tasteProfileBtn');
+    if (tasteProfileBtn) {
+        tasteProfileBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Use taste profile clicked');
+            useTasteProfile();
+        });
+    }
+    
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Clear filters clicked');
+            clearFilters();
+        });
+    }
+});
+
+async function loadRecommendations() {
+    console.log('loadRecommendations called');
+    const container = document.getElementById('recommendationsContainer');
+    if (!container) {
+        console.error('Container not found!');
+        return;
+    }
+    
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border"></div><p class="mt-3 text-muted">Yükleniyor...</p></div>';
+    
+    // Form verilerini al
+    const form = document.getElementById('recommendationFilters');
+    if (!form) {
+        console.error('Form not found!');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    // Query parametrelerini oluştur
+    const params = new URLSearchParams();
+    const category = formData.get('category');
+    const atmosphere = formData.get('atmosphere');
+    const context = formData.get('context');
+    const price = formData.get('price');
+    
+    console.log('Form values:', { category, atmosphere, context, price });
+    
+    if (category) params.append('category', category);
+    if (atmosphere) params.append('atmosphere', atmosphere);
+    if (context) params.append('context', context);
+    if (price) params.append('price', price);
+    params.append('limit', '20');
+    
+    try {
+        const queryString = params.toString();
+        const url = `/api/places/recommendations/${queryString ? '?' + queryString : ''}`;
+        console.log('Fetching recommendations from:', url);
+        
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Recommendations data:', data);
+        
+        if (data.success) {
+            const html = buildRecommendationsHTML(data);
+            console.log('Generated HTML length:', html.length);
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> ${data.error || 'Bir hata oluştu'}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> Öneriler yüklenirken bir hata oluştu: ${error.message}
+                <br><small>Lütfen konsolu kontrol edin (F12)</small>
+            </div>
+        `;
+    }
+}
+
+function buildRecommendationsHTML(data) {
+    if (!data.results || data.results.length === 0) {
+        return `
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> 
+                <p class="mb-0">Seçtiğin kriterlere uygun mekan bulunamadı.</p>
+                <p class="mb-0">Filtreleri değiştirip tekrar deneyebilirsin.</p>
+            </div>
+        `;
+    }
+    
+    // Query özeti
+    const query = data.query || {};
+    const queryParts = [];
+    if (query.category && query.category.length > 0) {
+        queryParts.push(query.category.join(', '));
+    }
+    if (query.atmosphere && query.atmosphere.length > 0) {
+        queryParts.push(query.atmosphere.join(', '));
+    }
+    if (query.context) {
+        const contextLabels = {
+            'friends': 'Arkadaşlarla',
+            'sevgili': 'Sevgiliyle',
+            'aile': 'Aileyle',
+            'tek': 'Tek Başına',
+            'work': 'İş'
+        };
+        queryParts.push(contextLabels[query.context] || query.context);
+    }
+    if (query.price) {
+        queryParts.push(query.price);
+    }
+    
+    let html = `
+        <div class="mb-3">
+            <h4>${data.count} mekan bulundu</h4>
+            ${queryParts.length > 0 ? `
+                <p class="text-muted">
+                    <i class="bi bi-tags"></i> ${queryParts.join(' + ')}
+                </p>
+            ` : `
+                <p class="text-muted">
+                    <i class="bi bi-palette"></i> Zevk profiline göre öneriler
+                </p>
+            `}
+        </div>
+        <div class="row">
+    `;
+    
+    // Mekan kartları
+    data.results.forEach(place => {
+        const photo = place.photos && place.photos.length > 0 ? place.photos[0] : null;
+        const scorePercent = Math.round(place.score * 100);
+        
+        html += `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    ${photo ? `
+                        <img src="${photo}" class="card-img-top" alt="${place.name}" 
+                             style="height: 200px; object-fit: cover;" 
+                             onerror="this.style.display='none';">
+                    ` : `
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="bi bi-image text-white" style="font-size: 48px;"></i>
+                        </div>
+                    `}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <a href="/places/${place.id}/" class="text-decoration-none">${place.name}</a>
+                            </h5>
+                            <span class="badge bg-primary">%${scorePercent}</span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-geo-alt"></i> ${place.location}
+                        </p>
+                        ${place.short_description ? `
+                            <p class="card-text small">${place.short_description.substring(0, 100)}${place.short_description.length > 100 ? '...' : ''}</p>
+                        ` : ''}
+                        <div class="mb-2">
+                            ${place.categories && place.categories.length > 0 ? place.categories.slice(0, 3).map(cat => 
+                                `<span class="badge bg-info me-1">${cat}</span>`
+                            ).join('') : ''}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary">${place.price_level || '₺₺'}</span>
+                            ${place.average_rating > 0 ? `
+                                <span class="rating-stars">
+                                    ${Array.from({length: 5}, (_, i) => 
+                                        i < Math.floor(place.average_rating) 
+                                            ? '<i class="bi bi-star-fill text-warning"></i>' 
+                                            : '<i class="bi bi-star text-muted"></i>'
+                                    ).join('')}
+                                    <small class="text-muted ms-1">${place.average_rating.toFixed(1)}</small>
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/places/${place.id}/" class="btn btn-sm btn-primary w-100">
+                            Detayları Gör <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    
+    return html;
+}
+
+function clearFilters() {
+    console.log('clearFilters called');
+    const form = document.getElementById('recommendationFilters');
+    if (form) {
+        form.reset();
+        loadRecommendations();
+    }
+}
+
+function useTasteProfile() {
+    console.log('useTasteProfile called');
+    // Filtreleri temizle ve taste profile ile yükle
+    const form = document.getElementById('recommendationFilters');
+    if (form) {
+        form.reset();
+    }
+    loadRecommendations();
+}
+</script>
+{% endblock %}

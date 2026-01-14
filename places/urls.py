@@ -8,6 +8,7 @@ urlpatterns = [
     path('discover/', views.discover, name='discover'),
     path('discover/swipe/', views.discover_swipe, name='discover_swipe'),
     path('favorites/', views.favorites, name='favorites'),
+    path('recommendations/', views.recommendations, name='recommendations'),
     path('<int:place_id>/', views.place_detail, name='place_detail'),
     path('<int:place_id>/review/', views.add_review, name='add_review'),
 ]

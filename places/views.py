@@ -141,3 +141,9 @@ def discover_swipe(request):
 def favorites(request):
     """Favori listeleri sayfası"""
     return render(request, 'places/favorites.html')
+
+
+@login_required
+def recommendations(request):
+    """Öneriler sayfası"""
+    return render(request, 'places/recommendations.html')

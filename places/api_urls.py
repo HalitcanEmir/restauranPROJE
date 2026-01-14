@@ -1,5 +1,5 @@
 from django.urls import path
-from . import api_views, discover_api_views
+from . import api_views, discover_api_views, recommendation_api_views
 
 app_name = 'places_api'
 
@@ -11,4 +11,6 @@ urlpatterns = [
     path('discover/', discover_api_views.discover_places, name='discover'),
     path('discover/swipe/', discover_api_views.swipe_place, name='swipe'),
     path('discover/preferences/', discover_api_views.get_preferences, name='preferences'),
+    # Recommendation endpoint
+    path('recommendations/', recommendation_api_views.get_recommendations_api, name='recommendations'),
 ]
