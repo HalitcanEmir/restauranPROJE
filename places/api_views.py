@@ -129,6 +129,13 @@ def AddReviewAPIView(request, place_id):
             score.total_points += 10  # Her değerlendirme için +10 puan
             score.save()
             
+            # Taste profile'ı güncelle (asenkron olarak)
+            try:
+                from accounts.taste_profile import calculate_taste_profile_for_user
+                calculate_taste_profile_for_user(request.user, min_interactions=5)
+            except Exception as e:
+                print(f"Taste profile update error: {e}")
+            
             return Response({
                 'success': True,
                 'message': 'Değerlendirme başarıyla kaydedildi',

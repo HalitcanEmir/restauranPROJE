@@ -87,3 +87,9 @@ def profile_edit(request):
         form = ProfileEditForm(instance=profile)
     
     return render(request, 'accounts/profile_edit.html', {'form': form})
+
+
+@login_required
+def taste_profile_view(request):
+    """Zevk profili sayfası"""
+    return render(request, 'accounts/taste_profile.html')

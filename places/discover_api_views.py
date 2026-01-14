@@ -31,18 +31,9 @@ def discover_places(request):
     # Swipe yapılmamış mekanları getir
     places = Place.objects.exclude(id__in=swiped_place_ids)
     
-    # Filtreler
-    if category:
-        places = places.filter(categories__contains=[category])
-    
+    # SQLite uyumlu filtreler
     if price_level:
         places = places.filter(price_level=price_level)
-    
-    if atmosphere:
-        places = places.filter(tags__contains=[atmosphere])
-    
-    if suitable_for:
-        places = places.filter(categories__contains=[suitable_for])
     
     if city:
         places = places.filter(city__icontains=city)
@@ -50,8 +41,21 @@ def discover_places(request):
     # Fotoğrafı olan mekanları önceliklendir
     places = places.order_by('-created_at')
     
+    # Queryset'i listeye çevir
+    places_list = list(places)
+    
+    # JSONField filtrelerini Python'da yap (SQLite uyumluluğu için)
+    if category:
+        places_list = [p for p in places_list if category in (p.categories or [])]
+    
+    if atmosphere:
+        places_list = [p for p in places_list if atmosphere in (p.tags or [])]
+    
+    if suitable_for:
+        places_list = [p for p in places_list if suitable_for in (p.categories or [])]
+    
     # Serialize et
-    serializer = PlaceSerializer(places[:20], many=True)  # İlk 20 mekan
+    serializer = PlaceSerializer(places_list[:20], many=True)  # İlk 20 mekan
     
     return Response({
         'success': True,
@@ -119,6 +123,13 @@ def swipe_place(request):
         points_earned = 3
     else:
         points_earned = 0
+    
+    # Taste profile'ı güncelle (asenkron olarak)
+    try:
+        from accounts.taste_profile import calculate_taste_profile_for_user
+        calculate_taste_profile_for_user(user, min_interactions=5)
+    except Exception as e:
+        print(f"Taste profile update error: {e}")
     
     return Response({
         'success': True,

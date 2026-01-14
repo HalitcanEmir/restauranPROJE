@@ -28,3 +28,22 @@ class Profile(models.Model):
     def get_display_name(self):
         return self.display_name or self.user.username
 
+
+class UserTasteProfile(models.Model):
+    """Kullanıcı Zevk Profili Modeli"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='taste_profile')
+    
+    # Ağırlıklar (normalize edilmiş, toplamı 1.0)
+    category_weights = models.JSONField(default=dict, help_text="Kategori ağırlıkları: {'kafe': 0.35, 'brunch': 0.25}")
+    atmosphere_weights = models.JSONField(default=dict, help_text="Atmosfer ağırlıkları: {'estetik': 0.40, 'manzaralı': 0.20}")
+    context_weights = models.JSONField(default=dict, help_text="Context ağırlıkları: {'arkadaş': 0.60, 'sevgili': 0.25}")
+    
+    style_label = models.CharField(max_length=200, blank=True, help_text="Örn: 'Brunch + Kahve + Estetik'")
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"{self.user.username}'s Taste Profile: {self.style_label}"
+

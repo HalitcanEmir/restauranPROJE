@@ -43,6 +43,20 @@
             </div>
         </div>
         {% endif %}
+        
+        <!-- Taste Profile Card -->
+        <div class="card mt-3" id="tasteProfileCard">
+            <div class="card-header">
+                <h5><i class="bi bi-palette"></i> Zevk Profili</h5>
+            </div>
+            <div class="card-body" id="tasteProfileContent">
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="col-md-8">
@@ -123,4 +137,152 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadTasteProfile();
+});
+
+async function loadTasteProfile() {
+    const content = document.getElementById('tasteProfileContent');
+    
+    try {
+        const response = await fetch('/api/users/me/taste-profile/', {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.has_enough_data) {
+            // Taste profile var, göster
+            content.innerHTML = buildTasteProfileHTML(data);
+        } else {
+            // Yeterli veri yok
+            content.innerHTML = `
+                <div class="text-center">
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-info-circle"></i> ${data.message || 'Zevk profilini çıkarabilmemiz için birkaç mekan beğenmen gerekiyor.'}
+                    </p>
+                    <small class="text-muted">
+                        Şu an <strong>${data.interaction_count || 0}</strong> etkileşimin var. 
+                        En az <strong>${data.min_interactions || 5}</strong> mekanla etkileşime geç.
+                    </small>
+                    <div class="mt-3">
+                        <a href="{% url 'places:discover_swipe' %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-compass"></i> Keşfet
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading taste profile:', error);
+        content.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Zevk profili yüklenirken bir hata oluştu.
+            </div>
+        `;
+    }
+}
+
+function buildTasteProfileHTML(data) {
+    // Style label
+    let html = `
+        <div class="mb-3">
+            <h6 class="text-primary">
+                <i class="bi bi-stars"></i> ${data.style_label}
+            </h6>
+            <p class="text-muted small mb-0">
+                Sen ${data.style_label.toLowerCase()} mekan seven birisin.
+            </p>
+        </div>
+    `;
+    
+    // Context özeti
+    if (data.context_weights && Object.keys(data.context_weights).length > 0) {
+        const topContexts = Object.entries(data.context_weights)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+        
+        const contextLabels = {
+            'arkadaş': 'arkadaşlarınla',
+            'dost': 'arkadaşlarınla',
+            'sevgili': 'sevgiliyle',
+            'aile': 'aileyle',
+            'tek': 'tek başına',
+            'is': 'iş için'
+        };
+        
+        const contextText = topContexts.map(([ctx, weight]) => {
+            const label = contextLabels[ctx] || ctx;
+            const percent = Math.round(weight * 100);
+            return `${label} (%${percent})`;
+        }).join(', ');
+        
+        html += `
+            <div class="mb-3">
+                <small class="text-muted d-block mb-1">Kiminle gidilir:</small>
+                <p class="mb-0 small">${contextText}</p>
+            </div>
+        `;
+    }
+    
+    // Atmosfer özeti
+    if (data.atmosphere_weights && Object.keys(data.atmosphere_weights).length > 0) {
+        const topAtmospheres = Object.entries(data.atmosphere_weights)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([atm, _]) => atm);
+        
+        html += `
+            <div class="mb-3">
+                <small class="text-muted d-block mb-1">Atmosfer tercihlerin:</small>
+                <div>
+                    ${topAtmospheres.map(atm => 
+                        `<span class="badge bg-info me-1">${atm}</span>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Kategori dağılımı (progress bar)
+    if (data.category_weights && Object.keys(data.category_weights).length > 0) {
+        const topCategories = Object.entries(data.category_weights)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+        
+        html += `
+            <div class="mb-2">
+                <small class="text-muted d-block mb-2">Kategori tercihlerin:</small>
+                ${topCategories.map(([cat, weight]) => {
+                    const percent = Math.round(weight * 100);
+                    return `
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>${cat}</small>
+                                <small class="text-muted">%${percent}</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="mt-3 pt-3 border-top">
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i> 
+                Yeni mekanlar beğendikçe zevk profilin yenilenecek.
+            </small>
+        </div>
+    `;
+    
+    return html;
+}
+</script>
 {% endblock %}

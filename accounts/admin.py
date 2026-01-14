@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Profile
+from .models import User, Profile, UserTasteProfile
 
 
 @admin.register(User)
@@ -15,3 +15,11 @@ class ProfileAdmin(admin.ModelAdmin):
     list_filter = ['city', 'created_at']
     search_fields = ['user__username', 'display_name', 'city']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(UserTasteProfile)
+class UserTasteProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'style_label', 'updated_at']
+    list_filter = ['updated_at']
+    search_fields = ['user__username', 'style_label']
+    readonly_fields = ['updated_at']

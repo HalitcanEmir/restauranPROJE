@@ -26,14 +26,9 @@ def discover(request):
     mode = request.GET.get('mode', '')
     search = request.GET.get('search', '')
     
+    # SQLite uyumlu filtreler
     if city:
         places = places.filter(city__icontains=city)
-    
-    if category:
-        places = places.filter(categories__contains=[category])
-    
-    if mode:
-        places = places.filter(categories__contains=[mode])
     
     if search:
         places = places.filter(
@@ -42,8 +37,18 @@ def discover(request):
             Q(address__icontains=search)
         )
     
+    # Queryset'i listeye çevir (evaluate et)
+    places_list = list(places)
+    
+    # JSONField filtrelerini Python'da yap (SQLite uyumluluğu için)
+    if category:
+        places_list = [p for p in places_list if category in (p.categories or [])]
+    
+    if mode:
+        places_list = [p for p in places_list if mode in (p.categories or [])]
+    
     # Ortalama puanları hesapla
-    for place in places:
+    for place in places_list:
         avg = place.average_rating
         place.avg_rating = avg if avg else 0
         # Tam sayı kısmını al (None kontrolü ile)
@@ -54,7 +59,7 @@ def discover(request):
         place.visit_count = place.total_visits
     
     context = {
-        'places': places,
+        'places': places_list,
         'city': city,
         'category': category,
         'mode': mode,
