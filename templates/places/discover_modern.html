@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}Keşfet - MekanKeşif{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-dark: #1a1a1a;
+    --secondary-dark: #2d2d2d;
+    --accent: #d4af37;
+    --text-light: #f5f5f5;
+    --text-muted: #a0a0a0;
+}
+
+body {
+    background: var(--primary-dark);
+    color: var(--text-light);
+    overflow-x: hidden;
+}
+
+/* Form controls dark theme */
+.form-control, .form-select {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: white !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255,255,255,0.15) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+}
+
+.form-control::placeholder {
+    color: rgba(255,255,255,0.5) !important;
+}
+
+option {
+    background: var(--secondary-dark) !important;
+    color: white !important;
+}
+
+.place-card {
+    background: var(--secondary-dark);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.place-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+}
+
+.hero-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    position: relative;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 100%);
+}
+
+.place-header {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px;
+    color: white;
+}
+
+.place-name {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.place-category {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.place-slogan {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.place-content {
+    padding: 25px;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.tag {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid var(--accent);
+    transition: all 0.3s ease;
+}
+
+.tag:hover {
+    background: var(--accent);
+    color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.features-list {
+    margin: 20px 0;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.feature-icon {
+    font-size: 20px;
+    margin-right: 15px;
+    color: var(--accent);
+    min-width: 30px;
+}
+
+.feature-text {
+    flex: 1;
+}
+
+.feature-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-light);
+}
+
+.feature-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.menu-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 15px;
+}
+
+.menu-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: var(--accent);
+}
+
+.menu-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.menu-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.menu-item:hover {
+    transform: scale(1.05);
+}
+
+.menu-item-name {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-light);
+}
+
+.menu-item-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.reservation-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.reservation-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+}
+
+.reviews-section {
+    margin: 30px 0;
+}
+
+.review-item {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    border-left: 3px solid var(--accent);
+}
+
+.review-rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.stars {
+    color: var(--accent);
+    margin-right: 10px;
+}
+
+.review-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.review-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+.scroll-indicator {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filters Section (Fixed Top) -->
+<div class="container-fluid px-4 py-3" style="background: var(--secondary-dark); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label text-light small">Şehir</label>
+            <input type="text" name="city" class="form-control form-control-sm" value="{{ city }}" placeholder="İstanbul" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-light small">Kategori</label>
+            <select name="category" class="form-select form-select-sm" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                <option value="">Tümü</option>
+                <option value="kafe" {% if category == 'kafe' %}selected{% endif %}>Kafe</option>
+                <option value="restoran" {% if category == 'restoran' %}selected{% endif %}>Restoran</option>
+                <option value="bar" {% if category == 'bar' %}selected{% endif %}>Bar</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-light small">Mod</label>
+            <select name="mode" class="form-select form-select-sm" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                <option value="">Tümü</option>
+                <option value="sevgili" {% if mode == 'sevgili' %}selected{% endif %}>Sevgiliyle</option>
+                <option value="aile" {% if mode == 'aile' %}selected{% endif %}>Aileyle</option>
+                <option value="dost" {% if mode == 'dost' %}selected{% endif %}>Arkadaşlarla</option>
+                <option value="tek" {% if mode == 'tek' %}selected{% endif %}>Tek Başıma</option>
+                <option value="is" {% if mode == 'is' %}selected{% endif %}>İş</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-light small">Ara</label>
+            <input type="text" name="search" class="form-control form-control-sm" value="{{ search }}" placeholder="Mekan adı..." style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-sm w-100" style="background: var(--accent); color: var(--primary-dark); font-weight: bold;">
+                <i class="bi bi-search"></i> Filtrele
+            </button>
+            <a href="{% url 'places:discover' %}" class="btn btn-sm btn-outline-secondary w-100 mt-2" style="border-color: rgba(255,255,255,0.3); color: white;">
+                Temizle
+            </a>
+        </div>
+    </form>
+    {% if places|length > 0 %}
+    <div class="mt-2 text-center">
+        <small class="text-muted">{{ places|length }} mekan bulundu</small>
+    </div>
+    {% endif %}
+</div>
+
+<div class="container-fluid px-0">
+    {% for place in places %}
+    <div class="place-card fade-in" style="animation-delay: {{ forloop.counter0|mul:0.1 }}s">
+        <!-- Hero Image Section -->
+        <div class="position-relative">
+            {% if place.photos and place.photos|length > 0 %}
+                <img src="{{ place.photos.0 }}" alt="{{ place.name }}" class="hero-image" onerror="this.src='https://via.placeholder.com/800x400/2d2d2d/ffffff?text={{ place.name|urlencode }}'">
+            {% else %}
+                <div class="hero-image" style="background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%); display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-image" style="font-size: 64px; color: #666;"></i>
+                </div>
+            {% endif %}
+            <div class="hero-overlay"></div>
+            <div class="place-header">
+                <h1 class="place-name">{{ place.name }}</h1>
+                <div class="place-category">
+                    {% if place.categories %}
+                        {{ place.categories|join:", " }}
+                    {% endif %}
+                    {% if place.avg_rating > 0 %}
+                        • 
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= place.avg_rating_int %}
+                                <i class="bi bi-star-fill" style="color: #d4af37;"></i>
+                            {% else %}
+                                <i class="bi bi-star" style="color: #666;"></i>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% if place.short_description %}
+                    <p class="place-slogan">{{ place.short_description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="place-content">
+            <!-- Tags -->
+            <div class="tags-container">
+                {% if place.tags %}
+                    {% for tag in place.tags|slice:":4" %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                {% endif %}
+                {% if place.featured_features %}
+                    {% for feature in place.featured_features|slice:":2" %}
+                        <span class="tag">{{ feature }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Features -->
+            <div class="features-list">
+                {% if place.featured_features %}
+                    {% for feature in place.featured_features|slice:":4" %}
+                        <div class="feature-item slide-up" style="animation-delay: {{ forloop.counter0|mul:0.1 }}s">
+                            <div class="feature-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div class="feature-text">
+                                <div class="feature-title">{{ feature }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if place.tags %}
+                    {% if "canlı müzik" in place.tags|join:" "|lower or "müzik" in place.tags|join:" "|lower %}
+                        <div class="feature-item slide-up">
+                            <div class="feature-icon"><i class="bi bi-music-note-beamed"></i></div>
+                            <div class="feature-text">
+                                <div class="feature-title">Canlı Müzik</div>
+                                <div class="feature-desc">Hafta sonları canlı müzik performansları</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+                
+                {% if place.city %}
+                    <div class="feature-item slide-up">
+                        <div class="feature-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div class="feature-text">
+                            <div class="feature-title">Konum</div>
+                            <div class="feature-desc">{{ place.city }}, {{ place.address|truncatewords:5 }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Menu & Prices -->
+            <div class="menu-section">
+                <h3 class="menu-title">Menü & Fiyatlar</h3>
+                <div class="menu-items">
+                    {% if place.categories %}
+                        {% for cat in place.categories|slice:":4" %}
+                            <div class="menu-item">
+                                <div class="menu-item-name">{{ cat|title }}</div>
+                                <div class="menu-item-price">{{ place.price_level|default:"₺₺" }}+</div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="menu-item">
+                            <div class="menu-item-name">Menü</div>
+                            <div class="menu-item-price">{{ place.price_level|default:"₺₺" }}+</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reservation Button -->
+            <a href="{% url 'places:place_detail' place.id %}" class="reservation-btn text-decoration-none d-block text-center">
+                Detayları Gör
+            </a>
+
+            <!-- Reviews Section -->
+            {% if place.avg_rating > 0 %}
+            <div class="reviews-section">
+                <div class="review-item">
+                    <div class="review-rating">
+                        <div class="stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= place.avg_rating_int %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="review-count">{{ place.visit_count|default:0 }} değerlendirme</span>
+                    </div>
+                    <div class="review-text">
+                        Ortalama {{ place.avg_rating|floatformat:1 }} puan ile değerlendirilmiş.
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <i class="bi bi-compass" style="font-size: 64px; color: var(--text-muted); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light);">Henüz mekan bulunamadı</h3>
+        <p style="color: var(--text-muted);">Filtreleri değiştirip tekrar deneyin.</p>
+    </div>
+    {% endfor %}
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator">
+        <i class="bi bi-chevron-down" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+        <p style="margin: 0;">Aşağı Kaydırarak Keşfet</p>
+    </div>
+</div>
+
+<script>
+// Intersection Observer for scroll animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Observe all place cards
+document.querySelectorAll('.place-card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(30px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(card);
+});
+
+// Smooth scroll for reservation button
+document.querySelectorAll('.reservation-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        // Smooth scroll animation
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = '';
+        }, 150);
+    });
+});
+
+// Parallax effect for hero images
+window.addEventListener('scroll', () => {
+    document.querySelectorAll('.hero-image').forEach(img => {
+        const rect = img.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+            const scrolled = window.pageYOffset;
+            const parallax = scrolled * 0.3;
+            img.style.transform = `translateY(${parallax}px)`;
+        }
+    });
+});
+</script>
+{% endblock %}

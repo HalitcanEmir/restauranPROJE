@@ -17,7 +17,7 @@ def home(request):
 
 
 def discover(request):
-    """Mekan keşfet sayfası"""
+    """Mekan keşfet sayfası - Modern tasarım"""
     places = Place.objects.all()
     
     # Filtreler
@@ -133,8 +133,8 @@ def add_review(request, place_id):
 
 @login_required
 def discover_swipe(request):
-    """Swipe keşfet sayfası"""
-    return render(request, 'places/discover_swipe.html')
+    """Swipe keşfet sayfası - Modern tasarım"""
+    return render(request, 'places/discover_swipe_modern.html')
 
 
 @login_required
