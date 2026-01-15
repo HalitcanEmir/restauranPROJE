@@ -26,6 +26,37 @@ class Place(models.Model):
     hours = models.JSONField(default=dict, blank=True, help_text="Çalışma saatleri: {'monday': '09:00-22:00'}")
     menu_link = models.URLField(blank=True, null=True, help_text="Menü linki (opsiyonel)")
     
+    # Zenginleştirilmiş alanlar - Davranış odaklı discovery için
+    # 1. Atmosfer Profili
+    atmosphere_profile = models.JSONField(default=dict, blank=True, help_text="Atmosfer detayları: {'noise_level': 'düşük', 'lighting': 'soft', 'vibe': 'chill', 'mode': ['chill', 'creative work'], 'table_size': 'geniş'}")
+    working_suitability = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], help_text="Çalışma uygunluğu % (0-100)")
+    wifi_quality = models.CharField(max_length=20, blank=True, help_text="Wi-Fi kalitesi: 'var', 'güçlü', 'yok'")
+    power_outlets = models.CharField(max_length=50, blank=True, help_text="Priz durumu: 'bazı masalarda', 'her masada', 'yok'")
+    peak_hours = models.JSONField(default=dict, blank=True, help_text="Yoğun saatler: {'start': '13:00', 'end': '18:00'}")
+    
+    # 2. Karar Destekleyici Bilgiler
+    price_range = models.JSONField(default=dict, blank=True, help_text="Fiyat aralığı: {'min': 110, 'max': 190, 'currency': '₺'}")
+    menu_highlights = models.JSONField(default=list, blank=True, help_text="Menü öne çıkanları: [{'name': 'Flat White', 'rating': 'iyi', 'emoji': '☕'}]")
+    best_time_to_visit = models.CharField(max_length=200, blank=True, help_text="En iyi ziyaret zamanı: 'Hafta içi 17:00-20:00'")
+    
+    # 3. Use Case Mapping
+    use_cases = models.JSONField(default=dict, blank=True, help_text="Kullanım senaryoları: {'date': True, 'friends': True, 'work': True, 'group': False, 'family': False}")
+    
+    # 4. Oyunlaştırma & Eğlence
+    popular_orders = models.JSONField(default=list, blank=True, help_text="En çok sipariş edilenler: [{'item': 'Latte', 'percentage': 42}]")
+    vibe_tags = models.JSONField(default=list, blank=True, help_text="Vibe etiketleri: ['Chill', 'Third-wave coffee', 'Local']")
+    similar_places = models.JSONField(default=list, blank=True, help_text="Benzer mekanlar: ['Soho House', 'Petra', 'Montag']")
+    
+    # 5. Sosyal Kanıt
+    owner_description = models.TextField(blank=True, help_text="Dükkan sahibinin açıklaması")
+    local_guide_note = models.TextField(blank=True, help_text="Local guide notu")
+    
+    # 6. Taste Profile Matching
+    target_audience = models.JSONField(default=list, blank=True, help_text="Hedef kitle: ['sessiz ortam + kahve + sohbet', 'estetik arayanlar', 'laptop çalışanlar']")
+    
+    # 7. Bir cümlelik özet
+    one_line_summary = models.CharField(max_length=300, blank=True, help_text="Bir cümlelik özet: 'Sessiz çalışayım, iki kahve içeyim' mekanı")
+    
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -11,13 +11,28 @@ class PlaceAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Temel Bilgiler', {
-            'fields': ('name', 'description', 'short_description', 'address', 'city')
+            'fields': ('name', 'description', 'short_description', 'address', 'city', 'one_line_summary')
         }),
         ('Kategoriler ve Etiketler', {
-            'fields': ('categories', 'tags', 'price_level')
+            'fields': ('categories', 'tags', 'price_level', 'vibe_tags')
         }),
         ('Vitrin Bilgileri', {
             'fields': ('photos', 'featured_features', 'hours', 'menu_link')
+        }),
+        ('Atmosfer Profili', {
+            'fields': ('atmosphere_profile', 'working_suitability', 'wifi_quality', 'power_outlets', 'peak_hours')
+        }),
+        ('Karar Destekleyici Bilgiler', {
+            'fields': ('price_range', 'menu_highlights', 'best_time_to_visit')
+        }),
+        ('Use Case Mapping', {
+            'fields': ('use_cases', 'target_audience')
+        }),
+        ('Oyunlaştırma', {
+            'fields': ('popular_orders', 'similar_places')
+        }),
+        ('Sosyal Kanıt', {
+            'fields': ('owner_description', 'local_guide_note')
         }),
         ('Konum', {
             'fields': ('latitude', 'longitude')

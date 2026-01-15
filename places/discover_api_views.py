@@ -60,7 +60,8 @@ def discover_places(request):
     return Response({
         'success': True,
         'places': serializer.data,
-        'count': len(serializer.data)
+        'count': len(serializer.data),
+        'total_available': len(places_list)
     })
 
 
