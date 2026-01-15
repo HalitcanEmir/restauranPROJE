@@ -78,11 +78,37 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# MongoDB Atlas Connection
+import os
+from urllib.parse import quote_plus
+
+# MongoDB connection string (username ve password environment variable'dan alınacak)
+# Production'da environment variable kullanın, development için direkt değer:
+MONGODB_USERNAME = os.environ.get('MONGODB_USERNAME', 'halitcanemir06')
+MONGODB_PASSWORD = os.environ.get('MONGODB_PASSWORD', 'RZlMOfHkkyQNrAWO')
+
+# Eğer username ve password varsa connection string'e ekle
+if MONGODB_USERNAME and MONGODB_PASSWORD:
+    MONGODB_URI = f"mongodb://{quote_plus(MONGODB_USERNAME)}:{quote_plus(MONGODB_PASSWORD)}@atlas-sql-688228f7978bec551476ca2b-k4jqir.a.query.mongodb.net/btkdb?tls=true&authSource=admin"
+else:
+    # Username/password yoksa (sadece test için)
+    MONGODB_URI = "mongodb://atlas-sql-688228f7978bec551476ca2b-k4jqir.a.query.mongodb.net/btkdb?tls=true&authSource=admin"
+
+# Django için SQLite kullanmaya devam ediyoruz (MongoDB için özel ORM gerekir)
+# MongoDB'yi direkt kullanmak için pymongo ile bağlantı yapacağız
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
+
+# MongoDB bağlantı ayarları (pymongo için)
+MONGODB_SETTINGS = {
+    'uri': MONGODB_URI,
+    'database': 'btkdb',
+    'ssl': True,
+    'ssl_cert_reqs': 'CERT_NONE'  # Atlas için
 }
 
 
