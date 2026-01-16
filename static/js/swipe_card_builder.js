@@ -36,6 +36,7 @@ class SwipeCardBuilder {
         const targetAudience = place.target_audience || [];
         const ratingBreakdown = place.rating_breakdown || {};
         const recentComments = place.recent_comments || [];
+        const behaviorStats = place.behavior_stats || {};
         
         // Place objesini de geç (tags, features için)
         const placeWithData = { ...place, tags, features };
@@ -63,14 +64,20 @@ class SwipeCardBuilder {
             <div class="card-content">
                 ${this.buildTasteProfileMatching(place, targetAudience, atmosphere, useCases)}
                 ${this.buildWhoGoesHere(placeWithData, atmosphere, targetAudience, useCases)}
-                ${this.buildVibeTags(vibeTags)}
+                ${this.buildRichAtmosphereSection(atmosphere, tags, features)}
+                ${this.buildTargetAudienceRich(targetAudience)}
+                ${this.buildUseCasesRich(useCases)}
+                ${this.buildPriceSection(place.price_level, priceRange)}
+                ${this.buildMenuHighlightsRich(menuHighlights)}
+                ${this.buildBehaviorStats(behaviorStats, popularOrders, place.working_suitability, atmosphere)}
+                ${this.buildGamificationSection(popularOrders, vibeTags, similarPlaces)}
                 ${this.buildDecisionSupport(place, priceRange, menuHighlights, popularOrders, place.working_suitability, place.wifi_quality, place.power_outlets, atmosphere, place.best_time_to_visit, useCases)}
                 ${this.buildAtmosphereProfile(atmosphere, place.working_suitability, place.wifi_quality, place.power_outlets, place.peak_hours)}
-                ${this.buildUseCases(useCases)}
-                ${this.buildTargetAudience(targetAudience)}
                 ${this.buildRatingBreakdown(ratingBreakdown, place.average_rating)}
+                ${this.buildBestTimeRich(place.best_time_to_visit)}
+                ${this.buildSimilarPlacesRich(similarPlaces)}
+                ${this.buildOneLineSummary(place.one_line_summary)}
                 ${this.buildSocialProof(recentComments, place.owner_description, place.local_guide_note)}
-                ${this.buildSimilarPlaces(similarPlaces)}
                 ${this.buildLocation(place.city, place.address)}
                 ${this.buildHours(hours)}
                 ${place.menu_link ? this.buildMenuLink(place.menu_link) : ''}
@@ -418,8 +425,110 @@ class SwipeCardBuilder {
         `;
     }
     
-    buildVibeTags(vibeTags) {
+    buildGamificationSection(popularOrders, vibeTags, similarPlaces) {
+        // Oyunlaştırma & Eğlence bölümü - tüm eğlenceli öğeleri bir araya getir
+        const hasPopularOrders = popularOrders && popularOrders.length > 0;
+        const hasVibeTags = vibeTags && vibeTags.length > 0;
+        const hasSimilarPlaces = similarPlaces && similarPlaces.length > 0;
+        
+        if (!hasPopularOrders && !hasVibeTags && !hasSimilarPlaces) {
+            return '';
+        }
+        
+        return `
+            <div class="card-section card-section-gamification">
+                <div class="gamification-header">
+                    <i class="bi bi-emoji-smile"></i>
+                    <span class="gamification-title">Oyunlaştırma & Eğlence</span>
+                </div>
+                
+                ${hasPopularOrders ? this.buildPopularOrdersGamified(popularOrders) : ''}
+                ${hasVibeTags ? this.buildVibeTagsGamified(vibeTags) : ''}
+                ${hasSimilarPlaces ? this.buildSimilarPlacesGamified(similarPlaces) : ''}
+            </div>
+        `;
+    }
+    
+    buildPopularOrdersGamified(popularOrders) {
+        if (!popularOrders || popularOrders.length === 0) return '';
+        
+        // En yüksek yüzdeyi bul
+        const topOrder = popularOrders[0];
+        const topPercentage = topOrder.percentage || 0;
+        
+        // Top 3'ü al
+        const topThree = popularOrders.slice(0, 3);
+        
+        return `
+            <div class="gamification-item gamification-popular-orders">
+                <div class="gamification-question">
+                    <i class="bi bi-question-circle-fill"></i>
+                    <span>Buraya gelenlerin <strong>%${topPercentage}</strong>'i ne sipariş etti?</span>
+                </div>
+                <div class="popular-orders-list-gamified">
+                    ${topThree.map((order, index) => `
+                        <div class="popular-order-gamified ${index === 0 ? 'popular-order-top' : ''}">
+                            <div class="popular-order-rank">${index + 1}.</div>
+                            <div class="popular-order-content">
+                                <span class="popular-order-name">${this.escapeHtml(order.item)}</span>
+                                ${order.percentage ? `<span class="popular-order-percentage">%${order.percentage}</span>` : ''}
+                            </div>
+                            ${index === 0 ? '<div class="popular-order-badge"><i class="bi bi-trophy-fill"></i> En Popüler</div>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildVibeTagsGamified(vibeTags) {
         if (!vibeTags || vibeTags.length === 0) return '';
+        
+        return `
+            <div class="gamification-item gamification-vibe-tags">
+                <div class="gamification-label">
+                    <i class="bi bi-tags-fill"></i>
+                    <span>Mekanın vibe etiketi:</span>
+                </div>
+                <div class="vibe-tags-gamified">
+                    ${vibeTags.map(tag => `
+                        <span class="vibe-tag-gamified">
+                            <i class="bi bi-star-fill"></i>
+                            ${this.escapeHtml(tag)}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildSimilarPlacesGamified(similarPlaces) {
+        if (!similarPlaces || similarPlaces.length === 0) return '';
+        
+        return `
+            <div class="gamification-item gamification-similar-places">
+                <div class="gamification-label">
+                    <i class="bi bi-shuffle"></i>
+                    <span>Bu mekan ile benzerler</span>
+                    <span class="gamification-subtitle">Spotify'ın "Benzer sanatçılar" özelliği gibi</span>
+                </div>
+                <div class="similar-places-gamified">
+                    ${similarPlaces.map((place, index) => `
+                        <a href="#" class="similar-place-gamified" data-place="${this.escapeHtml(place)}">
+                            <i class="bi bi-arrow-right-circle"></i>
+                            <span>${this.escapeHtml(place)}</span>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildVibeTags(vibeTags) {
+        // Eski fonksiyon - artık buildGamificationSection içinde kullanılıyor
+        // Ama geriye dönük uyumluluk için bırakıyoruz
+        if (!vibeTags || vibeTags.length === 0) return '';
+        
         return `
             <div class="card-section">
                 <div class="card-section-title">Vibe</div>
@@ -977,6 +1086,278 @@ class SwipeCardBuilder {
                 <a href="${this.escapeHtml(menuLink)}" target="_blank" class="menu-link-btn">
                     <i class="bi bi-menu-button-wide"></i> Menüyü Görüntüle
                 </a>
+            </div>
+        `;
+    }
+    
+    buildRichAtmosphereSection(atmosphere, tags, features) {
+        // Zenginleştirilmiş atmosfer bölümü - örnek: "Sessiz + sıcak + lokal + üçüncü dalga"
+        const atmosphereTags = [];
+        
+        // Atmosphere profile'dan
+        if (atmosphere) {
+            if (atmosphere.noise_level) {
+                const noiseMap = {'düşük': 'Sessiz', 'düşük gürültü': 'Sessiz', 'yüksek': 'Gürültülü'};
+                atmosphereTags.push(noiseMap[atmosphere.noise_level] || atmosphere.noise_level);
+            }
+            if (atmosphere.lighting) {
+                const lightMap = {'soft': 'Sıcak', 'warm': 'Sıcak', 'bright': 'Aydınlık'};
+                atmosphereTags.push(lightMap[atmosphere.lighting] || atmosphere.lighting);
+            }
+            if (atmosphere.vibe) {
+                atmosphereTags.push(atmosphere.vibe);
+            }
+        }
+        
+        // Tags ve features'dan
+        const relevantTags = [...tags, ...features].filter(t => {
+            const tLower = t.toLowerCase();
+            return tLower.includes('lokal') || tLower.includes('local') || 
+                   tLower.includes('üçüncü') || tLower.includes('third') ||
+                   tLower.includes('wave') || tLower.includes('dalga');
+        });
+        
+        atmosphereTags.push(...relevantTags.slice(0, 2));
+        
+        if (atmosphereTags.length === 0) return '';
+        
+        return `
+            <div class="card-section card-section-rich-atmosphere">
+                <div class="card-section-title">
+                    <i class="bi bi-cloud-sun"></i>
+                    Atmosfer
+                </div>
+                <div class="rich-atmosphere-tags">
+                    ${atmosphereTags.map(tag => `<span class="rich-atmosphere-tag">${this.escapeHtml(tag)}</span>`).join(' + ')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildTargetAudienceRich(targetAudience) {
+        if (!targetAudience || targetAudience.length === 0) return '';
+        
+        return `
+            <div class="card-section card-section-rich-audience">
+                <div class="card-section-title">
+                    <i class="bi bi-people-fill"></i>
+                    En çok tercih edenler
+                </div>
+                <div class="rich-audience-list">
+                    ${targetAudience.map(audience => `
+                        <div class="rich-audience-item">
+                            <i class="bi bi-person-check-fill"></i>
+                            <span>${this.escapeHtml(audience)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildUseCasesRich(useCases) {
+        if (!useCases || Object.keys(useCases).length === 0) return '';
+        
+        const suitable = [];
+        const notSuitable = [];
+        
+        const labels = {
+            'date': 'sakin date',
+            'friends': 'arkadaş buluşması',
+            'work': 'çalışmak',
+            'group': 'kalabalık grup',
+            'family': 'çocuklu aile',
+            'solo': 'tek başına'
+        };
+        
+        Object.entries(useCases).forEach(([key, value]) => {
+            if (value === true) {
+                suitable.push(labels[key] || key);
+            } else if (value === false) {
+                notSuitable.push(labels[key] || key);
+            }
+        });
+        
+        if (suitable.length === 0 && notSuitable.length === 0) return '';
+        
+        return `
+            <div class="card-section card-section-rich-usecases">
+                <div class="card-section-title">
+                    <i class="bi bi-check2-square"></i>
+                    Uygun kullanım
+                </div>
+                <div class="rich-usecases-content">
+                    ${suitable.length > 0 ? `
+                        <div class="rich-usecases-suitable">
+                            ${suitable.map(item => `
+                                <div class="rich-usecase-item rich-usecase-suitable">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>${this.escapeHtml(item)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${notSuitable.length > 0 ? `
+                        <div class="rich-usecases-not-suitable">
+                            ${notSuitable.map(item => `
+                                <div class="rich-usecase-item rich-usecase-not-suitable">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>${this.escapeHtml(item)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildPriceSection(priceLevel, priceRange) {
+        if (!priceLevel && (!priceRange || !priceRange.min)) return '';
+        
+        const priceText = priceRange && priceRange.min 
+            ? `(ortalama ₺${priceRange.min}–₺${priceRange.max})`
+            : '';
+        
+        return `
+            <div class="card-section card-section-rich-price">
+                <div class="card-section-title">
+                    <i class="bi bi-cash-stack"></i>
+                    Fiyat
+                </div>
+                <div class="rich-price-content">
+                    ${priceLevel ? `<span class="rich-price-level">${this.escapeHtml(priceLevel)}</span>` : ''}
+                    ${priceText ? `<span class="rich-price-range">${priceText}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildMenuHighlightsRich(menuHighlights) {
+        if (!menuHighlights || menuHighlights.length === 0) return '';
+        
+        return `
+            <div class="card-section card-section-rich-menu">
+                <div class="card-section-title">
+                    <i class="bi bi-star-fill"></i>
+                    Öne çıkanlar
+                </div>
+                <div class="rich-menu-highlights">
+                    ${menuHighlights.map(item => `
+                        <div class="rich-menu-item">
+                            <span class="rich-menu-emoji">${item.emoji || '☕'}</span>
+                            <span class="rich-menu-name">${this.escapeHtml(item.name)}</span>
+                            ${item.rating ? `<span class="rich-menu-rating">(${this.escapeHtml(item.rating)})</span>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildBehaviorStats(behaviorStats, popularOrders, workingSuitability, atmosphere) {
+        // Sipariş verileri ve davranış istatistikleri
+        const hasData = (behaviorStats && Object.keys(behaviorStats).length > 0) || 
+                       (popularOrders && popularOrders.length > 0) ||
+                       workingSuitability > 0 ||
+                       (atmosphere && atmosphere.noise_level);
+        
+        if (!hasData) return '';
+        
+        const topOrder = popularOrders && popularOrders.length > 0 ? popularOrders[0] : null;
+        const avgStay = behaviorStats.average_stay_minutes || behaviorStats.avg_stay;
+        const laptopRatio = behaviorStats.laptop_ratio || workingSuitability;
+        const quietness = behaviorStats.quietness_level || (atmosphere && atmosphere.noise_level) || '';
+        const powerOutlets = behaviorStats.power_outlets || '';
+        
+        return `
+            <div class="card-section card-section-behavior-stats">
+                <div class="card-section-title">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Sipariş verileri
+                </div>
+                <div class="behavior-stats-content">
+                    ${topOrder ? `
+                        <div class="behavior-stat-item">
+                            <i class="bi bi-trophy"></i>
+                            <span>En çok: <strong>${this.escapeHtml(topOrder.item)}</strong> (${topOrder.percentage ? `%${topOrder.percentage}` : ''})</span>
+                        </div>
+                    ` : ''}
+                    ${avgStay ? `
+                        <div class="behavior-stat-item">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Ortalama kalış: <strong>${avgStay} dk</strong></span>
+                        </div>
+                    ` : ''}
+                    ${laptopRatio ? `
+                        <div class="behavior-stat-item">
+                            <i class="bi bi-laptop"></i>
+                            <span>Laptop oranı: <strong>%${laptopRatio}</strong></span>
+                        </div>
+                    ` : ''}
+                    ${quietness ? `
+                        <div class="behavior-stat-item">
+                            <i class="bi bi-volume-down"></i>
+                            <span>Sessizlik: <strong>${this.escapeHtml(quietness)}</strong></span>
+                        </div>
+                    ` : ''}
+                    ${powerOutlets ? `
+                        <div class="behavior-stat-item">
+                            <i class="bi bi-plug"></i>
+                            <span>Priz: <strong>${this.escapeHtml(powerOutlets)}</strong></span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildBestTimeRich(bestTime) {
+        if (!bestTime) return '';
+        
+        return `
+            <div class="card-section card-section-rich-time">
+                <div class="card-section-title">
+                    <i class="bi bi-calendar-check"></i>
+                    İyi zaman
+                </div>
+                <div class="rich-time-content">
+                    <i class="bi bi-clock"></i>
+                    <span>${this.escapeHtml(bestTime)}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    buildSimilarPlacesRich(similarPlaces) {
+        if (!similarPlaces || similarPlaces.length === 0) return '';
+        
+        return `
+            <div class="card-section card-section-rich-similar">
+                <div class="card-section-title">
+                    <i class="bi bi-shuffle"></i>
+                    Benzer mekanlar
+                </div>
+                <div class="rich-similar-places">
+                    ${similarPlaces.map((place, index) => `
+                        <a href="#" class="rich-similar-place" data-place="${this.escapeHtml(place)}">
+                            ${this.escapeHtml(place)}${index < similarPlaces.length - 1 ? ' – ' : ''}
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildOneLineSummary(oneLineSummary) {
+        if (!oneLineSummary) return '';
+        
+        return `
+            <div class="card-section card-section-one-line-summary">
+                <div class="one-line-summary-content">
+                    <i class="bi bi-quote"></i>
+                    <span>"${this.escapeHtml(oneLineSummary)}"</span>
+                </div>
             </div>
         `;
     }

@@ -219,6 +219,7 @@ def calculate_price_match(place, query_price, taste_profile=None):
 def get_recommendations(user, query_params=None, limit=10):
     """
     Kullanıcı için öneriler üretir
+    En çok beğenilen mekanları önceliklendirir
     
     Args:
         user: User objesi
@@ -228,6 +229,8 @@ def get_recommendations(user, query_params=None, limit=10):
     Returns:
         tuple: (query_dict, results_list)
     """
+    from django.db.models import Avg, Count, Q
+    
     if query_params is None:
         query_params = {}
     
@@ -236,7 +239,7 @@ def get_recommendations(user, query_params=None, limit=10):
         user=user
     ).values_list('place_id', flat=True))
     
-    # Swipe yapılmamış mekanları getir (eğer swipe yapılmışsa)
+    # Swipe yapılmamış mekanları getir
     if swiped_place_ids:
         places = Place.objects.exclude(id__in=swiped_place_ids)
     else:
@@ -262,25 +265,99 @@ def get_recommendations(user, query_params=None, limit=10):
     if isinstance(atmosphere, str):
         atmosphere = [a.strip() for a in atmosphere.split(',')]
     
-    # Places'i listeye çevir (SQLite uyumluluğu için)
-    places_list = list(places)
-    
-    # Her mekan için skor hesapla
-    scored_places = []
-    for place in places_list:
-        score = calculate_match_score(place, {
-            'category': category,
-            'atmosphere': atmosphere,
-            'context': query_params.get('context'),
-            'price': query_params.get('price')
-        }, taste_profile)
+    # Eğer query parametresi yoksa, en çok beğenilen mekanları önceliklendir
+    if not query_params or (not category and not atmosphere and not query_params.get('context') and not query_params.get('price')):
+        # En çok beğenilen mekanları al (rating ve visit sayısına göre)
+        places = places.annotate(
+            visit_count=Count('visits'),
+            avg_rating=Avg('visits__rating')
+        ).filter(
+            visit_count__gt=0  # En az bir yorum olanlar
+        ).order_by(
+            '-avg_rating',  # Önce rating'e göre
+            '-visit_count'  # Sonra visit sayısına göre
+        )
         
-        # Sadece skoru 0'dan büyük olanları ekle
-        if score > 0:
+        # Places'i listeye çevir
+        places_list = list(places[:limit * 2])  # Biraz daha al ki filtrelerden sonra yeterli olsun
+        
+        # Her mekan için skor hesapla (rating bazlı) - ESKİ YÖNTEM
+        scored_places = []
+        for place in places_list:
+            # Rating bazlı skor (0-1 arası)
+            rating_score = (place.avg_rating or 0) / 5.0 if place.avg_rating else 0.0
+            
+            # Visit sayısına göre bonus (popülerlik)
+            visit_bonus = min(0.3, (place.visit_count or 0) / 100.0) if place.visit_count else 0.0
+            
+            # Toplam skor
+            score = min(1.0, rating_score + visit_bonus)
+            
             scored_places.append({
                 'place': place,
                 'score': score
             })
+        
+        # Skorları normalize et (en yüksek skor %95'e normalize edilir)
+        if scored_places:
+            scores = [item['score'] for item in scored_places]
+            max_score = max(scores) if scores else 1.0
+            
+            # En yüksek skoru 0.95'e normalize et (eğer 0.95'ten büyükse)
+            if max_score > 0.95:
+                normalization_factor = 0.95 / max_score
+                for item in scored_places:
+                    item['score'] = round(item['score'] * normalization_factor, 3)
+            else:
+                # Zaten düşükse, sadece yuvarla
+                for item in scored_places:
+                    item['score'] = round(item['score'], 3)
+    else:
+        # Filtre varsa, önce filtrele sonra skorla
+        places_list = list(places)
+        
+        # JSONField filtrelerini Python'da yap
+        if category:
+            places_list = [p for p in places_list if category and any(c in (p.categories or []) for c in category)]
+        
+        if atmosphere:
+            places_list = [p for p in places_list if atmosphere and any(a in (p.tags or []) for a in atmosphere)]
+        
+        # Her mekan için skor hesapla - ESKİ YÖNTEM
+        scored_places = []
+        for place in places_list:
+            score = calculate_match_score(place, {
+                'category': category,
+                'atmosphere': atmosphere,
+                'context': query_params.get('context'),
+                'price': query_params.get('price')
+            }, taste_profile)
+            
+            # Rating bonus ekle
+            if place.average_rating:
+                rating_bonus = (place.average_rating / 5.0) * 0.2  # %20 ekle
+                score = min(1.0, score + rating_bonus)
+            
+            if score > 0:
+                scored_places.append({
+                    'place': place,
+                    'score': score
+                })
+        
+        # Skorları normalize et (en yüksek skor %95'e normalize edilir)
+        if scored_places:
+            scores = [item['score'] for item in scored_places]
+            max_score = max(scores) if scores else 1.0
+            
+            # En yüksek skoru 0.95'e normalize et (eğer 0.95'ten büyükse)
+            if max_score > 0.95:
+                normalization_factor = 0.95 / max_score
+                for item in scored_places:
+                    item['score'] = round(item['score'] * normalization_factor, 3)
+            else:
+                # Zaten düşükse, sadece yuvarla
+                for item in scored_places:
+                    item['score'] = round(item['score'], 3)
     
     # Skora göre sırala
     scored_places.sort(key=lambda x: x['score'], reverse=True)
@@ -302,7 +379,8 @@ def get_recommendations(user, query_params=None, limit=10):
             'photos': place.photos or [],
             'short_description': place.short_description or '',
             'categories': place.categories or [],
-            'tags': place.tags or []
+            'tags': place.tags or [],
+            'total_visits': getattr(place, 'visit_count', place.total_visits) or 0
         })
     
     # Query dict oluştur

@@ -145,5 +145,12 @@ def favorites(request):
 
 @login_required
 def recommendations(request):
-    """Öneriler sayfası"""
-    return render(request, 'places/recommendations.html')
+    """Öneriler sayfası - Başlangıç formu veya swipe versiyonu"""
+    # Eğer query parametreleri varsa veya taste_profile parametresi varsa swipe sayfasını göster
+    has_query = request.GET.get('category') or request.GET.get('atmosphere') or request.GET.get('context') or request.GET.get('price') or request.GET.get('taste_profile')
+    
+    if has_query:
+        return render(request, 'places/recommendations_swipe.html')
+    else:
+        # Başlangıç formunu göster
+        return render(request, 'places/recommendations_start.html')

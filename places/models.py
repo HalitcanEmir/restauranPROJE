@@ -34,6 +34,9 @@ class Place(models.Model):
     power_outlets = models.CharField(max_length=50, blank=True, help_text="Priz durumu: 'bazı masalarda', 'her masada', 'yok'")
     peak_hours = models.JSONField(default=dict, blank=True, help_text="Yoğun saatler: {'start': '13:00', 'end': '18:00'}")
     
+    # Davranış İstatistikleri (Behavior Tracking için)
+    behavior_stats = models.JSONField(default=dict, blank=True, help_text="Davranış istatistikleri: {'average_stay_minutes': 87, 'laptop_ratio': 63, 'quietness_level': 'düşük gürültü'}")
+    
     # 2. Karar Destekleyici Bilgiler
     price_range = models.JSONField(default=dict, blank=True, help_text="Fiyat aralığı: {'min': 110, 'max': 190, 'currency': '₺'}")
     menu_highlights = models.JSONField(default=list, blank=True, help_text="Menü öne çıkanları: [{'name': 'Flat White', 'rating': 'iyi', 'emoji': '☕'}]")
@@ -130,4 +133,94 @@ class PlacePreference(models.Model):
             preferences__user=user,
             preferences__action='dislike'
         ).distinct()
+
+
+class UserBehavior(models.Model):
+    """Kullanıcı davranış kayıtları - Behavior Tracking"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='behaviors')
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='behaviors')
+    
+    # Davranış türleri
+    action_type = models.CharField(max_length=20, choices=[
+        ('view', 'Görüntüleme'),
+        ('swipe_like', 'Beğenme'),
+        ('swipe_dislike', 'Beğenmeme'),
+        ('swipe_save', 'Kaydetme'),
+        ('detail_view', 'Detay Görüntüleme'),
+        ('visit', 'Ziyaret'),
+        ('review', 'Yorum'),
+    ])
+    
+    # Bağlamsal bilgiler
+    context = models.JSONField(default=dict, blank=True, help_text="Bağlam: {'time_of_day': '17:00', 'day_of_week': 'monday', 'device': 'mobile'}")
+    filters_used = models.JSONField(default=list, blank=True, help_text="Kullanılan filtreler: ['category:kafe', 'price:$$']")
+    session_id = models.CharField(max_length=100, blank=True, help_text="Oturum ID")
+    
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', 'action_type']),
+            models.Index(fields=['place', 'action_type']),
+            models.Index(fields=['timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.place.name} - {self.action_type}"
+
+
+class SocialMatching(models.Model):
+    """Sosyal eşleştirme - Arkadaşların beğendiği mekanlar"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='social_matches')
+    place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='social_matches')
+    
+    # Arkadaşların etkileşimleri
+    friend_likes = models.IntegerField(default=0, help_text="Kaç arkadaş beğendi")
+    friend_visits = models.IntegerField(default=0, help_text="Kaç arkadaş ziyaret etti")
+    friend_reviews = models.IntegerField(default=0, help_text="Kaç arkadaş yorum yaptı")
+    
+    # Eşleşme skoru
+    match_score = models.FloatField(default=0.0, help_text="Sosyal eşleşme skoru (0-1)")
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['user', 'place']
+        ordering = ['-match_score']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.place.name} (Score: {self.match_score})"
+
+
+class PlaceGraph(models.Model):
+    """Local Discovery Graph - Mekanlar arası ilişkiler"""
+    from_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='outgoing_connections')
+    to_place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='incoming_connections')
+    
+    # İlişki türleri
+    relationship_type = models.CharField(max_length=20, choices=[
+        ('similar', 'Benzer'),
+        ('nearby', 'Yakın'),
+        ('same_category', 'Aynı Kategori'),
+        ('same_atmosphere', 'Aynı Atmosfer'),
+        ('user_co_visit', 'Birlikte Ziyaret Edilen'),
+        ('user_co_like', 'Birlikte Beğenilen'),
+    ])
+    
+    # İlişki gücü (0-1)
+    strength = models.FloatField(default=0.5, help_text="İlişki gücü (0-1)")
+    
+    # İstatistikler
+    co_visit_count = models.IntegerField(default=0, help_text="Birlikte ziyaret sayısı")
+    co_like_count = models.IntegerField(default=0, help_text="Birlikte beğenilme sayısı")
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['from_place', 'to_place', 'relationship_type']
+        ordering = ['-strength']
+    
+    def __str__(self):
+        return f"{self.from_place.name} -> {self.to_place.name} ({self.relationship_type})"
 

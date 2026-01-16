@@ -3,7 +3,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Exists, OuterRef
-from .models import Place, PlacePreference
+from django.utils import timezone
+from datetime import datetime
+from .models import Place, PlacePreference, UserBehavior
 from .serializers import PlaceSerializer
 
 
@@ -105,6 +107,30 @@ def swipe_place(request):
         user=user,
         place=place,
         defaults={'action': action}
+    )
+    
+    # Behavior Tracking - Kullanıcı davranışını kaydet
+    action_type_map = {
+        'like': 'swipe_like',
+        'dislike': 'swipe_dislike',
+        'save': 'swipe_save'
+    }
+    
+    # Bağlamsal bilgiler
+    now = timezone.now()
+    context = {
+        'time_of_day': now.strftime('%H:%M'),
+        'day_of_week': now.strftime('%A').lower(),
+        'device': request.META.get('HTTP_USER_AGENT', 'unknown')[:50]
+    }
+    
+    # Behavior kaydı oluştur
+    UserBehavior.objects.create(
+        user=user,
+        place=place,
+        action_type=action_type_map.get(action, 'swipe_like'),
+        context=context,
+        session_id=request.session.session_key or ''
     )
     
     # UserScore'a puan ekle (like için +5, save için +3)

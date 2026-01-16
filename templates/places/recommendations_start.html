@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Öneriler - MekanKeşif{% endblock %}
+
+{% block extra_css %}
+<style>
+.recommendations-start {
+    min-height: calc(100vh - 200px);
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    color: #ffffff;
+}
+
+.recommendations-start .container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.recommendations-start h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.recommendations-start .subtitle {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+}
+
+.recommendation-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.form-control, .form-select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.form-control::placeholder {
+    color: #888;
+}
+
+.btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-primary, .btn-secondary {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.divider::before {
+    left: 0;
+}
+
+.divider::after {
+    right: 0;
+}
+
+.divider span {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0 15px;
+    position: relative;
+    color: #aaa;
+}
+
+.btn-taste-profile {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+}
+
+.btn-taste-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(245, 87, 108, 0.4);
+}
+
+.info-text {
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 3px solid #667eea;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .recommendations-start h1 {
+        font-size: 2rem;
+    }
+    
+    .recommendation-form {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recommendations-start">
+    <div class="container">
+        <h1><i class="bi bi-lightbulb"></i> Öneriler</h1>
+        <p class="subtitle">Nasıl bir restoran arıyorsunuz?</p>
+        
+        <form method="GET" action="{% url 'places:recommendations' %}" class="recommendation-form" id="recommendationForm">
+            <div class="form-group">
+                <label for="category">
+                    <i class="bi bi-tag"></i> Kategori
+                </label>
+                <select name="category" id="category" class="form-select">
+                    <option value="">Tümü</option>
+                    <option value="kafe">Kafe</option>
+                    <option value="coffee">Kahve</option>
+                    <option value="brunch">Brunch</option>
+                    <option value="restoran">Restoran</option>
+                    <option value="bar">Bar</option>
+                    <option value="tatlı">Tatlı</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="atmosphere">
+                    <i class="bi bi-palette"></i> Atmosfer
+                </label>
+                <select name="atmosphere" id="atmosphere" class="form-select">
+                    <option value="">Tümü</option>
+                    <option value="estetik">Estetik</option>
+                    <option value="sakin">Sakin</option>
+                    <option value="canlı">Canlı</option>
+                    <option value="sessiz">Sessiz</option>
+                    <option value="modern">Modern</option>
+                    <option value="samimi">Samimi</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="context">
+                    <i class="bi bi-people"></i> Kiminle Gideceksiniz?
+                </label>
+                <select name="context" id="context" class="form-select">
+                    <option value="">Fark etmez</option>
+                    <option value="friends">Arkadaşlarla</option>
+                    <option value="sevgili">Sevgiliyle</option>
+                    <option value="aile">Aileyle</option>
+                    <option value="tek">Tek Başıma</option>
+                    <option value="work">İş</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="price">
+                    <i class="bi bi-currency-exchange"></i> Bütçe
+                </label>
+                <select name="price" id="price" class="form-select">
+                    <option value="">Fark etmez</option>
+                    <option value="₺">₺ (Ekonomik)</option>
+                    <option value="₺₺">₺₺ (Orta)</option>
+                    <option value="₺₺₺">₺₺₺ (Yüksek)</option>
+                </select>
+            </div>
+            
+            <div class="btn-group">
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-search"></i> Önerileri Göster
+                </button>
+                <a href="{% url 'places:discover' %}" class="btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Geri
+                </a>
+            </div>
+            
+            <div class="divider">
+                <span>VEYA</span>
+            </div>
+            
+            <button type="button" class="btn-taste-profile" onclick="useTasteProfile()">
+                <i class="bi bi-palette"></i> Zevk Profilimi Kullan
+            </button>
+            
+            <div class="info-text">
+                <i class="bi bi-info-circle"></i>
+                Zevk profilini kullanarak, geçmiş tercihlerinize göre size en uygun mekanları önerebiliriz.
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function useTasteProfile() {
+    // Zevk profilini kullanmak için direkt swipe sayfasına yönlendir (query params olmadan)
+    window.location.href = "{% url 'places:recommendations' %}?taste_profile=true";
+}
+
+// Form submit - query params ile yönlendir
+document.getElementById('recommendationForm').addEventListener('submit', function(e) {
+    const formData = new FormData(this);
+    const params = new URLSearchParams();
+    
+    formData.forEach((value, key) => {
+        if (value) {
+            params.append(key, value);
+        }
+    });
+    
+    // Eğer hiçbir seçenek seçilmemişse, direkt swipe sayfasına git (en çok beğenilenleri göster)
+    if (params.toString() === '') {
+        window.location.href = "{% url 'places:recommendations' %}";
+    } else {
+        window.location.href = "{% url 'places:recommendations' %}?" + params.toString();
+    }
+    
+    e.preventDefault();
+});
+</script>
+{% endblock %}
