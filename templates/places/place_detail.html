@@ -1,129 +1,190 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ place.name }} - MekanKeşif{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/place-detail.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h1 class="card-title">{{ place.name }}</h1>
-                <p class="text-muted">
-                    <i class="bi bi-geo-alt"></i> {{ place.address }}, {{ place.city }}
-                </p>
-                <p class="card-text">{{ place.description }}</p>
-                
-                <div class="mb-3">
-                    <strong>Kategoriler:</strong>
-                    {% for cat in place.categories %}
-                        <span class="badge bg-primary">{{ cat }}</span>
-                    {% endfor %}
-                </div>
-                
-                <div class="mb-3">
-                    <strong>Etiketler:</strong>
-                    {% for tag in place.tags %}
-                        <span class="badge bg-info">{{ tag }}</span>
-                    {% endfor %}
-                </div>
-                
-                <div class="mb-3">
-                    <strong>Fiyat Seviyesi:</strong> 
-                    <span class="badge bg-secondary">{{ place.price_level }}</span>
-                </div>
-                
-                <div class="mb-3">
-                    <strong>Ortalama Puan:</strong>
-                    <span class="rating-stars">
-                        {% for i in "12345" %}
-                            {% if forloop.counter <= average_rating|floatformat:0 %}
-                                <i class="bi bi-star-fill"></i>
-                            {% else %}
-                                <i class="bi bi-star"></i>
-                            {% endif %}
-                        {% endfor %}
-                    </span>
-                    <strong>{{ average_rating|floatformat:1 }}</strong> / 5.0
-                    <small class="text-muted">({{ total_visits }} değerlendirme)</small>
-                </div>
-                
-                {% if user.is_authenticated %}
-                <div class="mt-4">
-                    {% if user_visit %}
-                        <button onclick="openReviewModal({{ place.id }}, true)" class="btn btn-warning">
-                            <i class="bi bi-pencil"></i> Değerlendirmemi Güncelle
-                        </button>
-                    {% else %}
-                        <button onclick="openReviewModal({{ place.id }}, false)" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Ben de Gittim - Değerlendir
-                        </button>
-                    {% endif %}
-                </div>
-                {% else %}
-                <div class="alert alert-info mt-4">
-                    Değerlendirme yapmak için <a href="{% url 'accounts:login' %}">giriş yapın</a>.
-                </div>
-                {% endif %}
-            </div>
+<div class="place-detail-page">
+    <!-- Header -->
+    <div class="place-detail-header">
+        <h1 class="place-detail-title">{{ place.name }}</h1>
+        <div class="place-detail-location">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>{{ place.address }}, {{ place.city }}</span>
         </div>
-        
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5><i class="bi bi-chat-left-text"></i> Değerlendirmeler</h5>
+        <div class="place-detail-meta">
+            <div class="place-meta-item">
+                <i class="bi bi-star-fill" style="color: #fbbf24;"></i>
+                <span><strong>{{ average_rating|floatformat:1 }}</strong> / 5.0</span>
             </div>
-            <div class="card-body">
-                {% if visits %}
-                    {% for visit in visits %}
-                    <div class="border-bottom pb-3 mb-3">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ visit.user.username }}</strong>
-                            <small class="text-muted">{{ visit.visited_at|date:"d M Y H:i" }}</small>
-                        </div>
-                        <div class="mb-2">
-                            <span class="rating-stars">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= visit.rating %}
-                                        <i class="bi bi-star-fill"></i>
-                                    {% else %}
-                                        <i class="bi bi-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </span>
-                            <span class="badge bg-secondary">{{ visit.get_with_whom_display }}</span>
-                        </div>
-                        {% if visit.comment %}
-                        <p>{{ visit.comment }}</p>
-                        {% endif %}
-                        {% if visit.mood_tags %}
-                        <div>
-                            {% for tag in visit.mood_tags %}
-                                <span class="badge bg-info">{{ tag }}</span>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">Henüz değerlendirme yapılmamış.</p>
-                {% endif %}
+            <div class="place-meta-item">
+                <i class="bi bi-people"></i>
+                <span>{{ total_visits }} değerlendirme</span>
+            </div>
+            <div class="place-meta-item">
+                <i class="bi bi-currency-exchange"></i>
+                <span>{{ place.price_level|default:"₺₺" }}</span>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>İstatistikler</h5>
+    <div class="place-detail-layout">
+        <!-- Main Content -->
+        <main class="place-detail-main">
+            <!-- Images -->
+            {% if place.photos %}
+            <div class="place-image-gallery">
+                {% for photo in place.photos|slice:":6" %}
+                <img src="{{ photo }}" alt="{{ place.name }}" loading="lazy">
+                {% endfor %}
             </div>
-            <div class="card-body">
-                <p><strong>Toplam Ziyaret:</strong> {{ total_visits }}</p>
-                <p><strong>Ortalama Puan:</strong> {{ average_rating|floatformat:1 }} / 5.0</p>
+            {% endif %}
+            
+            <!-- Description -->
+            <section class="place-section">
+                <h2 class="section-title">
+                    <i class="bi bi-info-circle"></i> Hakkında
+                </h2>
+                <p class="place-description">{{ place.description|default:place.short_description }}</p>
+                
+                {% if place.categories or place.tags %}
+                <div class="place-tags">
+                    {% for cat in place.categories %}
+                    <span class="place-tag">{{ cat }}</span>
+                    {% endfor %}
+                    {% for tag in place.tags %}
+                    <span class="place-tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </section>
+            
+            <!-- Reviews -->
+            <section class="place-section">
+                <h2 class="section-title">
+                    <i class="bi bi-chat-left-text"></i> Değerlendirmeler
+                    <span style="font-size: var(--text-base); color: var(--text-secondary); font-weight: normal;">
+                        ({{ total_visits }})
+                    </span>
+                </h2>
+                
+                {% if user.is_authenticated %}
+                <div class="place-actions">
+                    {% if user_visit %}
+                    <button onclick="openReviewModal({{ place.id }}, true)" class="btn btn-secondary">
+                        <i class="bi bi-pencil"></i> Değerlendirmemi Güncelle
+                    </button>
+                    {% else %}
+                    <button onclick="openReviewModal({{ place.id }}, false)" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Ben de Gittim - Değerlendir
+                    </button>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="padding: var(--spacing-lg); background: var(--bg-tertiary); border-radius: var(--radius-lg); margin-bottom: var(--spacing-lg);">
+                    <i class="bi bi-info-circle"></i> Değerlendirme yapmak için 
+                    <a href="{% url 'accounts:login' %}" style="color: var(--primary); font-weight: var(--font-weight-semibold);">giriş yapın</a>.
+                </div>
+                {% endif %}
+                
+                <div class="reviews-list">
+                    {% if visits %}
+                        {% for visit in visits %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-user">{{ visit.user.username }}</span>
+                                <span class="review-date">{{ visit.visited_at|date:"d M Y" }}</span>
+                            </div>
+                            <div class="review-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= visit.rating %}
+                                        <i class="bi bi-star-fill" style="color: #fbbf24;"></i>
+                                    {% else %}
+                                        <i class="bi bi-star" style="color: var(--gray-300);"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if visit.get_with_whom_display %}
+                                <span class="tag" style="margin-left: var(--spacing-sm);">{{ visit.get_with_whom_display }}</span>
+                                {% endif %}
+                            </div>
+                            {% if visit.comment %}
+                            <p class="review-comment">{{ visit.comment }}</p>
+                            {% endif %}
+                            {% if visit.mood_tags %}
+                            <div class="place-tags" style="margin-top: var(--spacing-md);">
+                                {% for tag in visit.mood_tags %}
+                                <span class="place-tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div style="text-align: center; padding: var(--spacing-2xl); color: var(--text-muted);">
+                        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: var(--spacing-md);"></i>
+                        <p>Henüz değerlendirme yapılmamış.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+        
+        <!-- Sidebar -->
+        <aside class="place-detail-sidebar">
+            <div class="stats-card">
+                <h3 class="stats-title">İstatistikler</h3>
+                <div class="stats-item">
+                    <span class="stats-label">Ortalama Puan</span>
+                    <span class="stats-value">{{ average_rating|floatformat:1 }}</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Toplam Ziyaret</span>
+                    <span class="stats-value">{{ total_visits }}</span>
+                </div>
             </div>
+            
+            {% if place.hours %}
+            <div class="place-section">
+                <h3 class="section-title" style="font-size: var(--text-lg);">
+                    <i class="bi bi-clock"></i> Çalışma Saatleri
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                    {% for day, time in place.hours.items %}
+                    <div style="display: flex; justify-content: space-between; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="font-weight: var(--font-weight-medium);">{{ day|title }}</span>
+                        <span style="color: var(--text-secondary);">{{ time }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="modal" data-component="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Değerlendirme Yap</h3>
+            <button class="modal-close" data-modal-close>×</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'places:add_review' place.id %}" id="reviewForm">
+                {% csrf_token %}
+                <!-- Review form will be loaded here -->
+            </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/place-detail.js' %}"></script>
 {% include 'places/review_modal.html' %}
 {% endblock %}
+

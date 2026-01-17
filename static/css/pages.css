@@ -1,0 +1,227 @@
+/**
+ * Page-specific Styles
+ * Modern, professional page layouts
+ */
+
+/* Discover Page */
+.discover-page {
+    padding: var(--spacing-2xl) 0;
+}
+
+.discover-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--spacing-2xl);
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.discover-filters {
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+}
+
+.discover-content {
+    min-height: 600px;
+}
+
+.places-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.place-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-base);
+    display: flex;
+    flex-direction: column;
+}
+
+.place-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.place-card-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.place-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.place-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.place-card-body {
+    padding: var(--spacing-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.place-card-title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.place-card-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.place-card-title a:hover {
+    color: var(--primary);
+}
+
+.place-card-location {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.place-card-description {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-md);
+    flex: 1;
+}
+
+.place-card-rating {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.stars {
+    color: #fbbf24;
+    font-size: var(--text-sm);
+}
+
+.rating-value {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+.place-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.tag {
+    padding: 4px 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+.place-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.place-price {
+    font-weight: var(--font-weight-bold);
+    color: var(--primary);
+    font-size: var(--text-lg);
+}
+
+/* Filter Sidebar */
+.filter-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+}
+
+.filter-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Loading & Empty States */
+.loading-state,
+.empty-state,
+.error-state {
+    text-align: center;
+    padding: var(--spacing-3xl);
+    color: var(--text-secondary);
+}
+
+.loading-state .spinner {
+    margin: 0 auto var(--spacing-lg);
+    width: 48px;
+    height: 48px;
+    border-width: 4px;
+}
+
+.empty-state i,
+.error-state i {
+    font-size: 4rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .discover-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .discover-filters {
+        position: static;
+    }
+    
+    .places-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .places-grid {
+        grid-template-columns: 1fr;
+    }
+}

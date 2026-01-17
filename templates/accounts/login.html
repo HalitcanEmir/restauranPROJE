@@ -1,40 +1,66 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Giriş Yap - MekanKeşif{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="bi bi-box-arrow-in-right"></i> Giriş Yap</h4>
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <h1 class="auth-title">Hoş Geldiniz</h1>
+                <p class="auth-subtitle">Hesabınıza giriş yapın</p>
             </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Kullanıcı Adı</label>
-                        <input type="text" name="username" class="form-control" required>
+            
+            <form method="post" class="auth-form" data-validate>
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                    <div class="error-message" style="margin-bottom: var(--spacing-lg);">
+                        <i class="bi bi-exclamation-circle"></i>
+                        Kullanıcı adı veya şifre hatalı
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Şifre</label>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-person"></i> Kullanıcı Adı
+                    </label>
+                    <div class="input-icon">
+                        <i class="bi bi-person"></i>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-lock"></i> Şifre
+                    </label>
+                    <div class="input-icon">
+                        <i class="bi bi-lock"></i>
                         <input type="password" name="password" class="form-control" required>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
-                        </button>
-                    </div>
-                </form>
+                </div>
                 
-                <hr>
-                <p class="text-center">
-                    Hesabınız yok mu? 
-                    <a href="{% url 'accounts:register' %}">Kayıt olun</a>
-                </p>
+                <button type="submit" class="btn btn-primary" data-loading>
+                    <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
+                </button>
+            </form>
+            
+            <div class="auth-divider">
+                <span>VEYA</span>
+            </div>
+            
+            <div class="auth-footer">
+                Hesabınız yok mu? 
+                <a href="{% url 'accounts:register' %}">Kayıt olun</a>
             </div>
         </div>
     </div>
