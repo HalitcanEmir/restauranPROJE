@@ -8,12 +8,31 @@ from visits.forms import VisitForm
 
 
 def home(request):
-    """Ana sayfa - Mod seçimi"""
-    if not request.user.is_authenticated:
-        return render(request, 'places/home.html')
+    """Ana sayfa - Modern tanıtım sayfası"""
+    from django.db.models import Avg, Count
     
-    # Giriş yapmış kullanıcı için keşfet sayfasına yönlendir
-    return redirect('places:discover')
+    # Popüler mekanları al (en çok beğenilenler)
+    popular_places = Place.objects.annotate(
+        visit_count=Count('visits'),
+        avg_rating=Avg('visits__rating')
+    ).filter(
+        visit_count__gt=0
+    ).order_by(
+        '-avg_rating',
+        '-visit_count'
+    )[:6]  # İlk 6 mekan
+    
+    # Ortalama puanları hesapla
+    for place in popular_places:
+        place.avg_rating_display = round(place.avg_rating or 0, 1)
+        place.visit_count_display = place.visit_count or 0
+    
+    context = {
+        'popular_places': popular_places,
+        'user': request.user
+    }
+    
+    return render(request, 'places/home.html', context)
 
 
 def discover(request):

@@ -1,65 +1,920 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Ana Sayfa - MekanKeşif{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    padding: 100px 0;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 12px 28px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 35px;
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255,255,255,0.4);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    animation: fadeInUp 0.6s ease-out;
+    transition: all 0.3s ease;
+}
+
+.hero-badge:hover {
+    background: rgba(255,255,255,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.hero-badge i {
+    color: #fbbf24;
+    margin-right: 10px;
+    filter: drop-shadow(0 2px 5px rgba(251, 191, 36, 0.5));
+    animation: starPulse 2s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(180deg);
+    }
+}
+
+.hero-title {
+    font-size: 4.5rem;
+    font-weight: 900;
+    margin-bottom: 30px;
+    text-shadow: 0 4px 25px rgba(0,0,0,0.4),
+                 0 2px 10px rgba(0,0,0,0.3);
+    animation: fadeInUp 0.8s ease-out;
+    line-height: 1.15;
+    letter-spacing: -1px;
+}
+
+.hero-title span {
+    display: block;
+    margin-top: 10px;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 50px;
+    opacity: 0.95;
+    line-height: 1.8;
+    animation: fadeInUp 1s ease-out;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    max-width: 90%;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 50px;
+    animation: fadeInUp 1.1s ease-out;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: left;
+    position: relative;
+    padding-left: 20px;
+}
+
+.stat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 40px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 2px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 3px 15px rgba(0,0,0,0.3);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 1rem;
+    opacity: 0.95;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    animation: fadeInUp 1.2s ease-out;
+}
+
+.hero-visual {
+    position: relative;
+    height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.hero-image-placeholder {
+    width: 350px;
+    height: 350px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(30px);
+    border: 3px solid rgba(255,255,255,0.3);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4),
+                inset 0 0 50px rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 1;
+    animation: floatCenter 4s ease-in-out infinite;
+}
+
+.hero-image-placeholder i {
+    font-size: 10rem;
+    color: rgba(255,255,255,0.9);
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+}
+
+.floating-card {
+    position: absolute;
+    background: rgba(255,255,255,0.98);
+    border-radius: 25px;
+    padding: 25px 35px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.25),
+                0 5px 15px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,0.5);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.floating-card:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.floating-card i {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 5px rgba(102, 126, 234, 0.3));
+}
+
+.floating-card .card-text {
+    font-weight: 800;
+    color: #2d3748;
+    font-size: 1.2rem;
+    letter-spacing: -0.5px;
+}
+
+.card-1 {
+    top: 5%;
+    left: 5%;
+    animation: float 3.5s ease-in-out infinite;
+    animation-delay: 0s;
+}
+
+.card-2 {
+    top: 45%;
+    right: 5%;
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 1.5s;
+}
+
+.card-3 {
+    bottom: 5%;
+    left: 15%;
+    animation: float 3.8s ease-in-out infinite;
+    animation-delay: 0.8s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-25px) rotate(2deg);
+    }
+}
+
+@keyframes floatCenter {
+    0%, 100% {
+        transform: translateY(0px) scale(1);
+    }
+    50% {
+        transform: translateY(-15px) scale(1.02);
+    }
+}
+
+.hero-btn {
+    padding: 16px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.hero-btn-primary {
+    background: white;
+    color: #667eea;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.hero-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    color: #764ba2;
+}
+
+.hero-btn-secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    backdrop-filter: blur(10px);
+}
+
+.hero-btn-secondary:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-3px);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Features Section */
+.features-section {
+    padding: 100px 0;
+    background: #f8f9fa;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.feature-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #2d3748;
+}
+
+.feature-desc {
+    color: #718096;
+    line-height: 1.6;
+}
+
+/* Popular Places Section */
+.places-section {
+    padding: 100px 0;
+    background: white;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #718096;
+    margin-bottom: 60px;
+}
+
+.place-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.place-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.place-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.place-card-body {
+    padding: 25px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.place-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #2d3748;
+}
+
+.place-category {
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.place-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.rating-stars {
+    color: #fbbf24;
+    font-size: 1.1rem;
+}
+
+.rating-value {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.place-description {
+    color: #718096;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.place-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.place-price {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.view-place-btn {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.view-place-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+/* How It Works Section */
+.how-it-works {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.step-card {
+    text-align: center;
+    padding: 30px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    position: relative;
+    height: 100%;
+}
+
+.step-number {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.step-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    color: #2d3748;
+}
+
+.step-desc {
+    color: #718096;
+    line-height: 1.6;
+}
+
+/* CTA Section */
+.cta-section {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+}
+
+.cta-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.cta-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+    opacity: 0.95;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-btn {
+    padding: 16px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    border: 2px solid white;
+    background: white;
+    color: #667eea;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.cta-btn:hover {
+    background: transparent;
+    color: white;
+    transform: translateY(-3px);
+}
+
+.cta-btn-outline {
+    background: transparent;
+    color: white;
+}
+
+.cta-btn-outline:hover {
+    background: white;
+    color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .hero-stats {
+        gap: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .hero-visual {
+        height: 400px;
+        margin-top: 50px;
+    }
+    
+    .hero-image-placeholder {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .hero-image-placeholder i {
+        font-size: 6rem;
+    }
+    
+    .floating-card {
+        padding: 18px 25px;
+    }
+    
+    .floating-card i {
+        font-size: 2rem;
+    }
+    
+    .floating-card .card-text {
+        font-size: 1rem;
+    }
+    
+    .card-1 {
+        top: 0;
+        left: 0;
+    }
+    
+    .card-2 {
+        top: auto;
+        bottom: 10%;
+        right: 0;
+    }
+    
+    .card-3 {
+        bottom: 0;
+        left: 0;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card text-center">
-            <div class="card-body py-5">
-                <h1 class="display-4 mb-4">
-                    <i class="bi bi-geo-alt-fill text-primary"></i> MekanKeşif
-                </h1>
-                <p class="lead mb-4">Kafe ve restoran keşfetmenin sosyal yolu</p>
-                
-                {% if not user.is_authenticated %}
-                <div class="mb-4">
-                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg me-2">
-                        <i class="bi bi-person-plus"></i> Kayıt Ol
-                    </a>
-                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg">
-                        <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
-                    </a>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content text-start">
+                    <div class="hero-badge">
+                        <i class="bi bi-star-fill"></i> Size Özel Keşif Deneyimi
+                    </div>
+                    <h1 class="hero-title">
+                        Mekanları Keşfet,<br>
+                        <span style="background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Zevkine Göre Yaşa</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Kafe ve restoran keşfetmenin sosyal yolu. Zevk profilinize göre size özel öneriler alın, 
+                        arkadaşlarınızla paylaşın ve yeni mekanlar keşfedin.
+                    </p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">60+</div>
+                            <div class="stat-label">Mekan</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1000+</div>
+                            <div class="stat-label">Değerlendirme</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">%95</div>
+                            <div class="stat-label">Eşleşme Oranı</div>
+                        </div>
+                    </div>
+                    <div class="hero-buttons">
+                        {% if not user.is_authenticated %}
+                            <a href="{% url 'accounts:register' %}" class="hero-btn hero-btn-primary">
+                                <i class="bi bi-person-plus"></i> Ücretsiz Başla
+                            </a>
+                            <a href="{% url 'accounts:login' %}" class="hero-btn hero-btn-secondary">
+                                <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
+                            </a>
+                        {% else %}
+                            <a href="{% url 'places:discover_swipe' %}" class="hero-btn hero-btn-primary">
+                                <i class="bi bi-arrow-left-right"></i> Swipe ile Keşfet
+                            </a>
+                            <a href="{% url 'places:recommendations' %}" class="hero-btn hero-btn-secondary">
+                                <i class="bi bi-lightbulb"></i> Önerilerim
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
-                {% else %}
-                <div class="mb-4">
-                    <h3>Nasıl bir mekan arıyorsunuz?</h3>
-                    <div class="row mt-4">
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}?mode=sevgili" class="btn btn-outline-danger w-100 py-3">
-                                <i class="bi bi-heart-fill"></i><br>Sevgiliyle
-                            </a>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-visual">
+                    <div class="floating-card card-1">
+                        <i class="bi bi-cup-hot"></i>
+                        <div class="card-text">Kafe</div>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="bi bi-utensils"></i>
+                        <div class="card-text">Restoran</div>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="bi bi-heart-fill"></i>
+                        <div class="card-text">Favoriler</div>
+                    </div>
+                    <div class="hero-image-placeholder">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">Neden MekanKeşif?</h2>
+        <p class="section-subtitle">Size özel keşif deneyimi</p>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-heart-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Kişisel Öneriler</h3>
+                    <p class="feature-desc">
+                        Zevk profilinize göre size özel mekan önerileri. 
+                        Beğenilerinize uygun yerleri keşfedin.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Sosyal Keşif</h3>
+                    <p class="feature-desc">
+                        Arkadaşlarınızın beğendiği mekanları görün. 
+                        Sosyal ağınızla birlikte keşfedin.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Detaylı Değerlendirmeler</h3>
+                    <p class="feature-desc">
+                        Atmosfer, uygunluk, fiyat ve daha fazlası. 
+                        Karar vermenize yardımcı detaylı bilgiler.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Places Section -->
+{% if popular_places %}
+<section class="places-section">
+    <div class="container">
+        <h2 class="section-title">Popüler Mekanlar</h2>
+        <p class="section-subtitle">En çok beğenilen yerler</p>
+        
+        <div class="row g-4">
+            {% for place in popular_places %}
+            <div class="col-md-4">
+                <div class="place-card">
+                    {% if place.photos and place.photos|length > 0 %}
+                        <img src="{{ place.photos.0 }}" alt="{{ place.name }}" class="place-image" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    {% endif %}
+                    <div class="place-image" style="display: {% if place.photos and place.photos|length > 0 %}none{% else %}flex{% endif %};">
+                        <i class="bi bi-cup-hot"></i>
+                    </div>
+                    <div class="place-card-body">
+                        <h3 class="place-name">{{ place.name }}</h3>
+                        <div class="place-category">
+                            {% if place.categories %}
+                                {{ place.categories|first }}
+                            {% endif %}
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}?mode=aile" class="btn btn-outline-success w-100 py-3">
-                                <i class="bi bi-people-fill"></i><br>Aileyle
-                            </a>
+                        <div class="place-rating">
+                            <div class="rating-stars">
+                                {% if place.avg_rating_display >= 4.5 %}
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                {% elif place.avg_rating_display >= 3.5 %}
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i>
+                                {% elif place.avg_rating_display >= 2.5 %}
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                                {% elif place.avg_rating_display >= 1.5 %}
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                                {% elif place.avg_rating_display >= 0.5 %}
+                                    <i class="bi bi-star-fill"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                                {% endif %}
+                            </div>
+                            <span class="rating-value">{{ place.avg_rating_display }}</span>
+                            <span style="color: #9ca3af;">({{ place.visit_count_display }} değerlendirme)</span>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}?mode=dost" class="btn btn-outline-info w-100 py-3">
-                                <i class="bi bi-person-friends"></i><br>Arkadaşlarla
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}?mode=tek" class="btn btn-outline-secondary w-100 py-3">
-                                <i class="bi bi-person"></i><br>Tek Başıma
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}?mode=is" class="btn btn-outline-warning w-100 py-3">
-                                <i class="bi bi-briefcase-fill"></i><br>İş
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{% url 'places:discover' %}" class="btn btn-primary w-100 py-3">
-                                <i class="bi bi-search"></i><br>Tümünü Keşfet
+                        <p class="place-description">
+                            {{ place.short_description|default:place.description|truncatewords:20 }}
+                        </p>
+                        <div class="place-footer">
+                            <span class="place-price">{{ place.price_level|default:"₺₺" }}</span>
+                            <a href="{% url 'places:place_detail' place.id %}" class="view-place-btn">
+                                Detayları Gör <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>
                 </div>
-                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{% url 'places:discover' %}" class="hero-btn hero-btn-primary">
+                <i class="bi bi-search"></i> Tüm Mekanları Keşfet
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">Nasıl Çalışır?</h2>
+        <p class="section-subtitle">3 adımda başlayın</p>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Kayıt Ol</h3>
+                    <p class="step-desc">
+                        Hızlıca kayıt olun ve zevk profilinizi oluşturun. 
+                        Tercihlerinizi belirtin.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Keşfet</h3>
+                    <p class="step-desc">
+                        Swipe ile mekanları keşfedin veya öneriler sayfasından 
+                        size özel mekanları görün.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Değerlendir</h3>
+                    <p class="step-desc">
+                        Mekanları değerlendirin, yorum yapın. 
+                        Zevk profiliniz otomatik güncellenir.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- CTA Section -->
+{% if not user.is_authenticated %}
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">Hemen Başlayın</h2>
+        <p class="cta-subtitle">Binlerce mekanı keşfedin, size özel öneriler alın</p>
+        <div class="cta-buttons">
+            <a href="{% url 'accounts:register' %}" class="cta-btn">
+                <i class="bi bi-person-plus"></i> Ücretsiz Kayıt Ol
+            </a>
+            <a href="{% url 'places:discover' %}" class="cta-btn cta-btn-outline">
+                <i class="bi bi-search"></i> Önce Keşfet
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}
