@@ -1,92 +1,114 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ profile_user.username }} - Profil{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
+<div class="profile-page">
+    <div class="profile-layout">
+        <!-- Sidebar -->
+        <aside class="profile-sidebar">
+            <!-- Profile Card -->
+            <div class="profile-card">
                 {% if profile_user.profile.avatar %}
-                    <img src="{{ profile_user.profile.avatar.url }}" class="rounded-circle mb-3" width="150" height="150" alt="Avatar">
+                    <img src="{{ profile_user.profile.avatar.url }}" class="profile-avatar" alt="{{ profile_user.username }}">
                 {% else %}
-                    <i class="bi bi-person-circle" style="font-size: 150px;"></i>
+                    <i class="bi bi-person-circle profile-avatar-icon"></i>
                 {% endif %}
-                <h4>{{ profile_user.profile.get_display_name }}</h4>
-                <p class="text-muted">@{{ profile_user.username }}</p>
+                
+                <h2 class="profile-name">{{ profile_user.profile.get_display_name }}</h2>
+                <p class="profile-username">@{{ profile_user.username }}</p>
                 
                 {% if profile_user.profile.city %}
-                    <p><i class="bi bi-geo-alt"></i> {{ profile_user.profile.city }}</p>
+                <div class="profile-location">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span>{{ profile_user.profile.city }}</span>
+                </div>
                 {% endif %}
                 
                 {% if profile_user.profile.bio %}
-                    <p>{{ profile_user.profile.bio }}</p>
+                <div class="profile-bio">{{ profile_user.profile.bio }}</div>
                 {% endif %}
                 
                 {% if is_own_profile %}
-                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary" style="width: 100%;">
                     <i class="bi bi-pencil"></i> Profili Düzenle
                 </a>
                 {% endif %}
             </div>
-        </div>
-        
-        {% if profile_user.profile.favorite_categories %}
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5>Favori Kategoriler</h5>
+            
+            <!-- Stats Card -->
+            {% if is_own_profile %}
+            <div class="profile-stats">
+                <h3 class="profile-stats-title">
+                    <i class="bi bi-bar-chart"></i> İstatistikler
+                </h3>
+                <div class="profile-stat-item">
+                    <span class="profile-stat-label">Ziyaretler</span>
+                    <span class="profile-stat-value">{{ visits|length }}</span>
+                </div>
+                <div class="profile-stat-item">
+                    <span class="profile-stat-label">Favoriler</span>
+                    <span class="profile-stat-value">-</span>
+                </div>
             </div>
-            <div class="card-body">
-                {% for cat in profile_user.profile.favorite_categories %}
-                    <span class="badge bg-primary">{{ cat }}</span>
-                {% endfor %}
+            {% endif %}
+            
+            <!-- Favorite Categories -->
+            {% if profile_user.profile.favorite_categories %}
+            <div class="favorite-categories-card">
+                <h3 class="favorite-categories-title">
+                    <i class="bi bi-heart"></i> Favori Kategoriler
+                </h3>
+                <div class="favorite-categories-list">
+                    {% for cat in profile_user.profile.favorite_categories %}
+                        <span class="favorite-category-tag">{{ cat }}</span>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-        {% endif %}
-        
-        <!-- Taste Profile Card -->
-        <div class="card mt-3" id="tasteProfileCard">
-            <div class="card-header">
-                <h5><i class="bi bi-palette"></i> Zevk Profili</h5>
-            </div>
-            <div class="card-body" id="tasteProfileContent">
-                <div class="text-center">
-                    <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+            {% endif %}
+            
+            <!-- Taste Profile Card -->
+            {% if is_own_profile %}
+            <div class="taste-profile-card">
+                <h3 class="taste-profile-title">
+                    <i class="bi bi-palette"></i> Zevk Profili
+                </h3>
+                <div class="taste-profile-content" id="tasteProfileContent">
+                    <div style="text-align: center; padding: var(--spacing-lg);">
+                        <div class="spinner"></div>
+                        <p style="margin-top: var(--spacing-md); color: var(--text-muted);">Yükleniyor...</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="bi bi-calendar-check"></i> Gittiğim Yerler</h5>
-            </div>
-            <div class="card-body">
+            {% endif %}
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="profile-main">
+            <section class="visits-section">
+                <h2 class="visits-section-title">
+                    <i class="bi bi-calendar-check"></i> Gittiğim Yerler
+                </h2>
+                
                 {% if visits %}
+                <div class="visits-list">
                     {% for visit in visits %}
-                    <div class="border-bottom pb-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6>
-                                    <a href="{% url 'places:place_detail' visit.place.id %}" class="text-decoration-none">
-                                        {{ visit.place.name }}
-                                    </a>
-                                </h6>
-                                <small class="text-muted">{{ visit.visited_at|date:"d M Y" }}</small>
-                            </div>
-                            {% if visit.sentiment %}
-                            <span class="badge bg-primary ms-2">
-                                {{ visit.get_sentiment_display }}
-                            </span>
-                            {% endif %}
+                    <div class="visit-item">
+                        <div class="visit-header">
+                            <a href="{% url 'places:place_detail' visit.place.id %}" class="visit-place-name">
+                                {{ visit.place.name }}
+                            </a>
+                            <span class="visit-date">{{ visit.visited_at|date:"d M Y" }}</span>
                         </div>
                         
                         {% if visit.rating %}
-                        <div class="mb-2">
-                            <span class="rating-stars">
+                        <div class="visit-rating">
+                            <div class="visit-rating-stars">
                                 {% for i in "12345" %}
                                     {% if forloop.counter <= visit.rating %}
                                         <i class="bi bi-star-fill"></i>
@@ -94,195 +116,54 @@
                                         <i class="bi bi-star"></i>
                                     {% endif %}
                                 {% endfor %}
-                            </span>
-                            <small class="text-muted ms-2">{{ visit.rating }}/5</small>
+                            </div>
+                            <span class="visit-rating-value">{{ visit.rating }}/5</span>
+                            {% if visit.sentiment %}
+                            <span class="visit-sentiment">{{ visit.get_sentiment_display }}</span>
+                            {% endif %}
                         </div>
                         {% endif %}
                         
-                        {% if visit.tags %}
-                        <div class="mb-2">
+                        {% if visit.tags or visit.suitable_for or visit.atmosphere %}
+                        <div class="visit-tags">
                             {% for tag in visit.tags %}
-                                <span class="badge bg-info">{{ tag }}</span>
+                                <span class="tag">{{ tag }}</span>
                             {% endfor %}
-                        </div>
-                        {% endif %}
-                        
-                        {% if visit.suitable_for %}
-                        <div class="mb-2">
-                            <small class="text-muted">Kiminle:</small>
                             {% for suitable in visit.suitable_for %}
-                                <span class="badge bg-secondary">{{ suitable }}</span>
+                                <span class="tag">{{ suitable }}</span>
                             {% endfor %}
-                        </div>
-                        {% endif %}
-                        
-                        {% if visit.atmosphere %}
-                        <div class="mb-2">
-                            <small class="text-muted">Ortam:</small>
                             {% for atm in visit.atmosphere %}
-                                <span class="badge bg-success">{{ atm }}</span>
+                                <span class="tag">{{ atm }}</span>
                             {% endfor %}
                         </div>
                         {% endif %}
                         
                         {% if visit.comment %}
-                        <p class="mb-2 mt-2">{{ visit.comment|truncatewords:30 }}</p>
+                        <div class="visit-comment">
+                            {{ visit.comment|truncatewords:50 }}
+                        </div>
                         {% endif %}
                     </div>
                     {% endfor %}
+                </div>
                 {% else %}
-                    <p class="text-muted">Henüz ziyaret kaydedilmemiş.</p>
+                <div class="empty-visits">
+                    <i class="bi bi-inbox"></i>
+                    <p>Henüz ziyaret kaydedilmemiş.</p>
+                    {% if is_own_profile %}
+                    <a href="{% url 'places:discover' %}" class="btn btn-primary" style="margin-top: var(--spacing-lg);">
+                        <i class="bi bi-compass"></i> Mekan Keşfet
+                    </a>
+                    {% endif %}
+                </div>
                 {% endif %}
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    loadTasteProfile();
-});
-
-async function loadTasteProfile() {
-    const content = document.getElementById('tasteProfileContent');
-    
-    try {
-        const response = await fetch('/api/users/me/taste-profile/', {
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
-        
-        if (data.success && data.has_enough_data) {
-            // Taste profile var, göster
-            content.innerHTML = buildTasteProfileHTML(data);
-        } else {
-            // Yeterli veri yok
-            content.innerHTML = `
-                <div class="text-center">
-                    <p class="text-muted mb-2">
-                        <i class="bi bi-info-circle"></i> ${data.message || 'Zevk profilini çıkarabilmemiz için birkaç mekan beğenmen gerekiyor.'}
-                    </p>
-                    <small class="text-muted">
-                        Şu an <strong>${data.interaction_count || 0}</strong> etkileşimin var. 
-                        En az <strong>${data.min_interactions || 5}</strong> mekanla etkileşime geç.
-                    </small>
-                    <div class="mt-3">
-                        <a href="{% url 'places:discover_swipe' %}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-compass"></i> Keşfet
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading taste profile:', error);
-        content.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i> Zevk profili yüklenirken bir hata oluştu.
-            </div>
-        `;
-    }
-}
-
-function buildTasteProfileHTML(data) {
-    // Style label
-    let html = `
-        <div class="mb-3">
-            <h6 class="text-primary">
-                <i class="bi bi-stars"></i> ${data.style_label}
-            </h6>
-            <p class="text-muted small mb-0">
-                Sen ${data.style_label.toLowerCase()} mekan seven birisin.
-            </p>
-        </div>
-    `;
-    
-    // Context özeti
-    if (data.context_weights && Object.keys(data.context_weights).length > 0) {
-        const topContexts = Object.entries(data.context_weights)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-        
-        const contextLabels = {
-            'arkadaş': 'arkadaşlarınla',
-            'dost': 'arkadaşlarınla',
-            'sevgili': 'sevgiliyle',
-            'aile': 'aileyle',
-            'tek': 'tek başına',
-            'is': 'iş için'
-        };
-        
-        const contextText = topContexts.map(([ctx, weight]) => {
-            const label = contextLabels[ctx] || ctx;
-            const percent = Math.round(weight * 100);
-            return `${label} (%${percent})`;
-        }).join(', ');
-        
-        html += `
-            <div class="mb-3">
-                <small class="text-muted d-block mb-1">Kiminle gidilir:</small>
-                <p class="mb-0 small">${contextText}</p>
-            </div>
-        `;
-    }
-    
-    // Atmosfer özeti
-    if (data.atmosphere_weights && Object.keys(data.atmosphere_weights).length > 0) {
-        const topAtmospheres = Object.entries(data.atmosphere_weights)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(([atm, _]) => atm);
-        
-        html += `
-            <div class="mb-3">
-                <small class="text-muted d-block mb-1">Atmosfer tercihlerin:</small>
-                <div>
-                    ${topAtmospheres.map(atm => 
-                        `<span class="badge bg-info me-1">${atm}</span>`
-                    ).join('')}
-                </div>
-            </div>
-        `;
-    }
-    
-    // Kategori dağılımı (progress bar)
-    if (data.category_weights && Object.keys(data.category_weights).length > 0) {
-        const topCategories = Object.entries(data.category_weights)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
-        
-        html += `
-            <div class="mb-2">
-                <small class="text-muted d-block mb-2">Kategori tercihlerin:</small>
-                ${topCategories.map(([cat, weight]) => {
-                    const percent = Math.round(weight * 100);
-                    return `
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between mb-1">
-                                <small>${cat}</small>
-                                <small class="text-muted">%${percent}</small>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar" role="progressbar" style="width: ${percent}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    }
-    
-    html += `
-        <div class="mt-3 pt-3 border-top">
-            <small class="text-muted">
-                <i class="bi bi-info-circle"></i> 
-                Yeni mekanlar beğendikçe zevk profilin yenilenecek.
-            </small>
-        </div>
-    `;
-    
-    return html;
-}
-</script>
+<script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}
+
