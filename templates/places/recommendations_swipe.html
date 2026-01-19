@@ -5,19 +5,19 @@
 {% block title %}Öneriler - MekanKeşif{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/swipe_modern.css' %}">
+<link rel="stylesheet" href="{% static 'css/swipe_modern.css' %}?v=3.5">
 <link rel="stylesheet" href="{% static 'css/swipe_rich.css' %}">
 <link rel="stylesheet" href="{% static 'css/recommendation_score.css' %}">
 <style>
-/* Critical inline styles - load immediately */
+/* Critical inline styles */
 body.recommendations-page,
 body.recommendations-page * {
     box-sizing: border-box;
 }
 
 body.recommendations-page {
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    color: #1a1a1a !important;
     overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -45,48 +45,87 @@ body.recommendations-page .container {
 body.recommendations-page main {
     padding: 0 !important;
     margin: 0 !important;
+    background: transparent !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0 !important;
+}
+
+body.recommendations-page html {
+    background: #ffffff !important;
+    overflow: hidden !important;
 }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/swipe_card_builder.js' %}"></script>
-<script src="{% static 'js/swipe_recommendations.js' %}"></script>
+<script src="{% static 'js/swipe_card_builder.js' %}?v=3.6"></script>
+<script src="{% static 'js/swipe_recommendations.js' %}?v=3.5"></script>
+<script>
+// Debug: Check if new code is loaded
+console.log('Recommendations swipe page loaded - v3.4');
+if (typeof SwipeCardBuilder !== 'undefined') {
+    console.log('✓ SwipeCardBuilder loaded');
+} else {
+    console.error('✗ SwipeCardBuilder NOT loaded');
+}
+</script>
 {% endblock %}
 
 {% block content %}
 <!-- Global Overlays -->
-<div class="overlay-like">LIKE</div>
-<div class="overlay-nope">NOPE</div>
-<div class="overlay-save">SAVE</div>
+<div class="overlay-like">✓</div>
+<div class="overlay-nope">✗</div>
+<div class="overlay-save">★</div>
 
-<!-- Back Button -->
-<a href="{% url 'places:discover' %}" class="back-button" title="Geri Dön">
-    <i class="bi bi-arrow-left"></i>
-</a>
+<!-- Minimal Top Bar -->
+<div class="swipe-top-bar">
+    <a href="{% url 'places:recommendations' %}" class="back-btn">
+        <i class="bi bi-chevron-left"></i>
+    </a>
+    <div class="top-bar-center">
+        <span class="page-title">Öneriler</span>
+    </div>
+    <div class="top-bar-stats">
+        <div class="stat-badge" id="statLikes">
+            <i class="bi bi-heart"></i>
+            <span id="likesCount">0</span>
+        </div>
+        <div class="stat-badge" id="statSaves">
+            <i class="bi bi-bookmark"></i>
+            <span id="savesCount">0</span>
+        </div>
+    </div>
+</div>
 
+<!-- Swipe Container -->
 <div class="swipe-container">
     <div class="cards-stack" id="cardsStack">
         <!-- Cards will be loaded here -->
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons (Legacy - hidden, reaction buttons are in cards) -->
     <div class="action-buttons" id="actionButtons" style="display: none;">
-        <button class="action-btn btn-nope" onclick="swipeCard('dislike')" title="Beğenmedim">
+        <button class="action-btn btn-nope" onclick="swipeCard('dislike')" title="Beğenme">
             <i class="bi bi-x-lg"></i>
         </button>
         <button class="action-btn btn-save" onclick="swipeCard('save')" title="Kaydet">
             <i class="bi bi-bookmark"></i>
         </button>
-        <button class="action-btn btn-skip" onclick="nextCard()" title="Sıradaki">
-            <i class="bi bi-skip-forward"></i>
-        </button>
         <button class="action-btn btn-detail" onclick="showDetail()" title="Detay">
             <i class="bi bi-info-circle"></i>
         </button>
-        <button class="action-btn btn-like" onclick="swipeCard('like')" title="Beğendim">
-            <i class="bi bi-heart"></i>
+        <button class="action-btn btn-like" onclick="swipeCard('like')" title="Beğen">
+            <i class="bi bi-heart-fill"></i>
         </button>
+    </div>
+
+    <!-- Card Counter -->
+    <div class="card-counter" id="cardCounter" style="display: none;">
+        <span id="currentCardIndex">0</span>/<span id="totalCards">0</span>
     </div>
 </div>
 {% endblock %}

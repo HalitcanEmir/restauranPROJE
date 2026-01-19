@@ -5,7 +5,7 @@
 {% block title %}Keşfet - MekanKeşif{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/swipe_modern.css' %}?v=3.1">
+<link rel="stylesheet" href="{% static 'css/swipe_modern.css' %}?v=3.5">
 <link rel="stylesheet" href="{% static 'css/swipe_rich.css' %}">
 <style>
 /* Critical inline styles */
@@ -44,13 +44,25 @@ body.swipe-page .container {
 body.swipe-page main {
     padding: 0 !important;
     margin: 0 !important;
+    background: transparent !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0 !important;
+}
+
+body.swipe-page html {
+    background: #ffffff !important;
+    overflow: hidden !important;
 }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/swipe_card_builder.js' %}?v=3.0"></script>
-<script src="{% static 'js/swipe_modern.js' %}?v=3.2"></script>
+<script src="{% static 'js/swipe_card_builder.js' %}?v=3.6"></script>
+<script src="{% static 'js/swipe_modern.js' %}?v=3.4"></script>
 <script>
 // Debug: Check if new code is loaded
 console.log('Swipe page loaded - v2.0');

@@ -37,6 +37,18 @@ class SwipeCardBuilder {
     }
     
     /**
+     * Rastgele fotoğraf URL'si oluştur
+     */
+    getRandomPhoto(place) {
+        // Place ID'ye göre seed oluştur (aynı mekan için aynı fotoğraf)
+        const seed = place.id || Math.floor(Math.random() * 10000);
+        
+        // Picsum Photos - güvenilir placeholder servisi
+        // 1200x800 boyutunda, seed ile aynı fotoğraf garantisi
+        return `https://picsum.photos/seed/${seed}/1200/800`;
+    }
+    
+    /**
      * 1. COVER SECTION
      * Banner (foto slider) + Title + Kategori + Rating + Subtitle
      */
@@ -49,41 +61,27 @@ class SwipeCardBuilder {
         banner.className = 'card-banner';
         
         const photos = place.photos || [];
-        const currentPhoto = photos[photoIndex] || null;
+        let currentPhoto = photos[photoIndex] || null;
         
-        if (currentPhoto) {
-            const img = document.createElement('img');
-            img.src = currentPhoto;
-            img.alt = place.name;
-            img.className = 'card-banner-image';
-            img.onerror = function() {
-                this.style.display = 'none';
-                const placeholder = banner.querySelector('.card-banner-placeholder');
-                if (placeholder) placeholder.style.display = 'flex';
-            };
-            banner.appendChild(img);
-        }
-        
-        // Placeholder
-        const placeholder = document.createElement('div');
-        placeholder.className = 'card-banner-placeholder';
+        // Eğer fotoğraf yoksa rastgele fotoğraf ekle
         if (!currentPhoto) {
-            placeholder.style.display = 'flex';
-            const icon = document.createElement('i');
-            icon.className = 'bi bi-image';
-            placeholder.appendChild(icon);
-        } else {
-            placeholder.style.display = 'none';
+            currentPhoto = this.getRandomPhoto(place);
         }
-        banner.appendChild(placeholder);
         
-        // Foto sayısı gösterge (1/20)
-        if (totalPhotos > 0) {
-            const photoCounter = document.createElement('div');
-            photoCounter.className = 'card-photo-counter';
-            photoCounter.textContent = `${photoIndex + 1}/${totalPhotos}`;
-            banner.appendChild(photoCounter);
-        }
+        // Fotoğraf göster
+        const img = document.createElement('img');
+        img.src = currentPhoto;
+        img.alt = place.name;
+        img.className = 'card-banner-image';
+        img.loading = 'lazy';
+        img.onerror = function() {
+            // Eğer fotoğraf yüklenemezse, alternatif placeholder kullan
+            const fallbackSeed = (place.id || Date.now()) + 10000;
+            this.src = `https://picsum.photos/seed/${fallbackSeed}/1200/800`;
+        };
+        banner.appendChild(img);
+        
+        // Foto sayısı gösterge kaldırıldı (kullanıcı isteği)
         
         cover.appendChild(banner);
         

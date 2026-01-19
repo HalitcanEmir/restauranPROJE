@@ -29,12 +29,27 @@
 }
 
 body.swipe-page {
-    background: #ffffff;
+    background: #ffffff !important;
     color: var(--color-text-primary);
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+}
+
+body.recommendations-page {
+    background: #ffffff !important;
+    color: var(--color-text-primary);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
 }
 
 /* Hide navbar and footer */
@@ -50,11 +65,24 @@ body.swipe-page .container {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    background: transparent !important;
 }
 
 body.swipe-page main {
     padding: 0 !important;
     margin: 0 !important;
+    background: transparent !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0 !important;
+}
+
+body.swipe-page html {
+    background: #ffffff !important;
+    overflow: hidden !important;
 }
 
 /* Swipe Container - TikTok Style (Full Screen Vertical Scroll) */
@@ -64,44 +92,56 @@ body.swipe-page main {
     left: 0;
     width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    overflow: visible;
     z-index: 1;
+    background: #ffffff;
 }
 
 .cards-stack {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Hide scrollbar but keep functionality */
-.cards-stack::-webkit-scrollbar {
-    display: none;
-}
-
-.cards-stack {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    overflow: visible;
+    display: block;
 }
 
 .swipe-card {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     min-height: 100vh;
-    background: #ffffff;
+    background: #ffffff !important;
     box-shadow: none;
     overflow-y: auto;
     overflow-x: hidden;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     user-select: none;
     -webkit-overflow-scrolling: touch;
+    opacity: 0;
+    transform: translateY(100vh);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+    z-index: 1;
+    pointer-events: none;
+    will-change: transform, opacity;
+    isolation: isolate;
+    visibility: hidden;
+}
+
+.swipe-card.active {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    z-index: 10;
+    pointer-events: auto;
+    visibility: visible !important;
+}
+
+.swipe-card.prev {
+    opacity: 0 !important;
+    transform: translateY(-100vh) !important;
+    z-index: 1;
+    pointer-events: none;
+    visibility: hidden !important;
 }
 
 /* Hide scrollbar for cards */
@@ -160,18 +200,9 @@ body.swipe-page main {
     font-size: 48px;
 }
 
-/* Foto sayısı gösterge (1/20) */
+/* Foto sayısı gösterge kaldırıldı */
 .card-photo-counter {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
+    display: none !important;
 }
 
 /* Header (Title + Meta) */

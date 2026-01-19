@@ -17,6 +17,10 @@ class RecommendationsSwipeManager {
         this.lastMoveTime = 0;
         this.lastMoveX = 0;
         this.lastMoveY = 0;
+        this.stats = {
+            likes: 0,
+            saves: 0
+        };
         
         this.init();
     }
@@ -135,41 +139,114 @@ class RecommendationsSwipeManager {
         const stack = document.getElementById('cardsStack');
         stack.innerHTML = '';
         
-        const cardsToShow = this.cards.slice(this.currentIndex, this.currentIndex + 3);
-        
-        if (cardsToShow.length === 0) {
+        // Load all cards, but only show one at a time (TikTok style)
+        if (this.cards.length === 0) {
             this.showEmptyState();
             return;
         }
         
-        for (let i = 0; i < cardsToShow.length; i++) {
-            const card = await this.createCard(cardsToShow[i], i);
+        // Create all cards (absolute positioned, only active one visible)
+        for (let i = 0; i < this.cards.length; i++) {
+            const card = await this.createCard(this.cards[i], i);
             if (card && card instanceof Node) {
+                // Absolute positioning, only first card active
+                card.style.position = 'absolute';
+                card.style.top = '0';
+                card.style.left = '0';
+                if (i === 0) {
+                    card.classList.add('active');
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    card.style.zIndex = '10';
+                    card.style.visibility = 'visible';
+                    card.style.pointerEvents = 'auto';
+                    this.currentCard = card;
+                } else {
+                    card.classList.remove('active');
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(100vh)';
+                    card.style.zIndex = '1';
+                    card.style.visibility = 'hidden';
+                    card.style.pointerEvents = 'none';
+                }
+                
                 stack.appendChild(card);
             }
         }
         
+        // Hide legacy action buttons (reaction buttons are now in cards)
         const actionButtons = document.getElementById('actionButtons');
         if (actionButtons) {
-            actionButtons.style.display = 'flex';
+            actionButtons.style.display = 'none';
         }
-        this.setupDrag();
+        
+        // Update initial state
+        this.updateCardCounter();
+    }
+    
+    showNextCard() {
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
+        
+        const cards = stack.querySelectorAll('.swipe-card');
+        const currentCardEl = cards[this.currentIndex];
+        const nextCardEl = cards[this.currentIndex + 1];
+        
+        if (!currentCardEl || !nextCardEl) return;
+        
+        // Animate current card out
+        currentCardEl.classList.remove('active');
+        currentCardEl.classList.add('prev');
+        currentCardEl.style.opacity = '0';
+        currentCardEl.style.transform = 'translateY(-100vh)';
+        currentCardEl.style.zIndex = '1';
+        currentCardEl.style.visibility = 'hidden';
+        currentCardEl.style.pointerEvents = 'none';
+        
+        // Animate next card in
+        nextCardEl.classList.remove('prev');
+        nextCardEl.classList.add('active');
+        nextCardEl.style.opacity = '1';
+        nextCardEl.style.transform = 'translateY(0)';
+        nextCardEl.style.zIndex = '10';
+        nextCardEl.style.visibility = 'visible';
+        nextCardEl.style.pointerEvents = 'auto';
+        
+        // Update references
+        this.currentIndex++;
+        this.currentCard = nextCardEl;
+        this.updateCardCounter();
+    }
+    
+    updateCardCounter() {
+        const cardCounter = document.getElementById('cardCounter');
+        const currentCardIndex = document.getElementById('currentCardIndex');
+        const totalCards = document.getElementById('totalCards');
+        
+        if (cardCounter && this.cards.length > 0) {
+            cardCounter.style.display = 'block';
+            
+            if (currentCardIndex) {
+                currentCardIndex.textContent = this.currentIndex + 1;
+            }
+            if (totalCards) {
+                totalCards.textContent = this.cards.length;
+            }
+        }
     }
     
     async createCard(place, index) {
         const card = document.createElement('div');
         card.className = 'swipe-card';
         card.dataset.placeId = place.id;
-        card.style.zIndex = 5 - index;
+        card.dataset.index = index;
         
-        if (index > 0) {
-            card.style.transform = `scale(${1 - index * 0.02}) translateY(${index * 20}px)`;
-            card.style.opacity = 1 - index * 0.3;
-        }
+        // TikTok style: No stacking, full screen cards
         
         if (window.SwipeCardBuilder) {
             const builder = new window.SwipeCardBuilder();
             
+            // Load taste profile and calculate matching
             let tasteProfile = null;
             let matchResult = null;
             
@@ -182,95 +259,214 @@ class RecommendationsSwipeManager {
                 console.error('Error loading taste profile:', error);
             }
             
-            let cardHTML = builder.buildCardHTML(place);
+            // Get photo info for banner
+            const photos = place.photos || [];
+            const photoIndex = 0;
+            const totalPhotos = photos.length;
             
+            // Build card content using DOM elements
+            const cardContent = builder.buildCardContent(place, photoIndex, totalPhotos);
+            card.appendChild(cardContent);
+            
+            // Add taste profile matching if available
             if (matchResult && matchResult.hasMatch) {
                 const matchingHTML = builder.buildTasteProfileMatchingHTML(place, matchResult, tasteProfile);
-                cardHTML = cardHTML.replace(
-                    '<div class="card-content">',
-                    `<div class="card-content">${matchingHTML}`
-                );
+                const contentSection = card.querySelector('.card-content');
+                if (contentSection) {
+                    contentSection.insertAdjacentHTML('afterbegin', matchingHTML);
+                }
             }
             
             // Add recommendation badge (score 0-1 arası, yüzdeye çevir)
             if (place.score !== undefined && place.score !== null) {
-                // Score 0-1 arası olmalı, yüzdeye çevir
-                let scorePercent = 0;
-                if (typeof place.score === 'number') {
-                    if (place.score <= 1.0) {
-                        scorePercent = Math.round(place.score * 100);
-                    } else if (place.score <= 100) {
-                        scorePercent = Math.round(place.score);
-                    } else {
-                        scorePercent = Math.min(100, Math.round(place.score / 100));
-                    }
-                } else if (typeof place.score === 'string') {
-                    const scoreNum = parseFloat(place.score);
-                    if (!isNaN(scoreNum)) {
-                        scorePercent = scoreNum <= 1.0 ? Math.round(scoreNum * 100) : Math.round(scoreNum);
-                    }
+                const badge = this.createRecommendationBadge(place.score);
+                const contentSection = card.querySelector('.card-content');
+                if (contentSection && badge) {
+                    contentSection.insertBefore(badge, contentSection.firstChild);
                 }
-                
-                scorePercent = Math.max(0, Math.min(100, scorePercent));
-                
-                // Score seviyesine göre bilgiler
-                let scoreClass = 'score-medium';
-                let scoreIcon = '⭐';
-                let scoreLabel = 'İyi Eşleşme';
-                let progressColor = '#667eea';
-                
-                if (scorePercent >= 85) {
-                    scoreClass = 'score-excellent';
-                    scoreIcon = '🏆';
-                    scoreLabel = 'Mükemmel Eşleşme';
-                    progressColor = '#38ef7d';
-                } else if (scorePercent >= 70) {
-                    scoreClass = 'score-high';
-                    scoreIcon = '⭐';
-                    scoreLabel = 'Çok İyi Eşleşme';
-                    progressColor = '#60a5fa';
-                } else if (scorePercent >= 50) {
-                    scoreClass = 'score-medium';
-                    scoreIcon = '👍';
-                    scoreLabel = 'İyi Eşleşme';
-                    progressColor = '#667eea';
-                } else {
-                    scoreClass = 'score-low';
-                    scoreIcon = '💡';
-                    scoreLabel = 'Dene';
-                    progressColor = '#f59e0b';
-                }
-                
-                const badgeHTML = `
-                    <div class="recommendation-score-container ${scoreClass}">
-                        <div class="recommendation-score-header">
-                            <div class="recommendation-score-icon">${scoreIcon}</div>
-                            <div class="recommendation-score-info">
-                                <div class="recommendation-score-label">${scoreLabel}</div>
-                                <div class="recommendation-score-value">%${scorePercent}</div>
-                            </div>
-                        </div>
-                        <div class="recommendation-score-progress">
-                            <div class="recommendation-score-progress-bar" 
-                                 style="width: ${scorePercent}%; background: linear-gradient(90deg, ${progressColor} 0%, ${progressColor}dd 100%);"></div>
-                            <div class="recommendation-score-progress-fill" 
-                                 style="width: ${scorePercent}%;"></div>
-                        </div>
-                    </div>
-                `;
-                cardHTML = cardHTML.replace(
-                    '<div class="card-content">',
-                    `<div class="card-content">${badgeHTML}`
-                );
             }
             
-            card.innerHTML = cardHTML;
+            // Setup reaction buttons event listeners
+            this.setupReactionButtons(card, place);
         } else {
             // Fallback
             card.innerHTML = this.buildCardHTML(place);
         }
         
+        // Add interactive effects
+        this.addCardInteractivity(card);
+        
         return card;
+    }
+    
+    createRecommendationBadge(score) {
+        // Score 0-1 arası olmalı, yüzdeye çevir
+        let scorePercent = 0;
+        if (typeof score === 'number') {
+            if (score <= 1.0) {
+                scorePercent = Math.round(score * 100);
+            } else if (score <= 100) {
+                scorePercent = Math.round(score);
+            } else {
+                scorePercent = Math.min(100, Math.round(score / 100));
+            }
+        } else if (typeof score === 'string') {
+            const scoreNum = parseFloat(score);
+            if (!isNaN(scoreNum)) {
+                scorePercent = scoreNum <= 1.0 ? Math.round(scoreNum * 100) : Math.round(scoreNum);
+            }
+        }
+        
+        scorePercent = Math.max(0, Math.min(100, scorePercent));
+        
+        // Score seviyesine göre bilgiler
+        let scoreClass = 'score-medium';
+        let scoreIcon = '⭐';
+        let scoreLabel = 'İyi Eşleşme';
+        let progressColor = '#667eea';
+        
+        if (scorePercent >= 85) {
+            scoreClass = 'score-excellent';
+            scoreIcon = '🏆';
+            scoreLabel = 'Mükemmel Eşleşme';
+            progressColor = '#38ef7d';
+        } else if (scorePercent >= 70) {
+            scoreClass = 'score-high';
+            scoreIcon = '⭐';
+            scoreLabel = 'Çok İyi Eşleşme';
+            progressColor = '#60a5fa';
+        } else if (scorePercent >= 50) {
+            scoreClass = 'score-medium';
+            scoreIcon = '👍';
+            scoreLabel = 'İyi Eşleşme';
+            progressColor = '#667eea';
+        } else {
+            scoreClass = 'score-low';
+            scoreIcon = '💡';
+            scoreLabel = 'Dene';
+            progressColor = '#f59e0b';
+        }
+        
+        const container = document.createElement('div');
+        container.className = `recommendation-score-container ${scoreClass}`;
+        
+        const header = document.createElement('div');
+        header.className = 'recommendation-score-header';
+        
+        const icon = document.createElement('div');
+        icon.className = 'recommendation-score-icon';
+        icon.textContent = scoreIcon;
+        
+        const info = document.createElement('div');
+        info.className = 'recommendation-score-info';
+        
+        const label = document.createElement('div');
+        label.className = 'recommendation-score-label';
+        label.textContent = scoreLabel;
+        
+        const value = document.createElement('div');
+        value.className = 'recommendation-score-value';
+        value.textContent = `%${scorePercent}`;
+        
+        info.appendChild(label);
+        info.appendChild(value);
+        header.appendChild(icon);
+        header.appendChild(info);
+        
+        const progress = document.createElement('div');
+        progress.className = 'recommendation-score-progress';
+        
+        const progressBar = document.createElement('div');
+        progressBar.className = 'recommendation-score-progress-bar';
+        progressBar.style.width = `${scorePercent}%`;
+        progressBar.style.background = `linear-gradient(90deg, ${progressColor} 0%, ${progressColor}dd 100%)`;
+        
+        const progressFill = document.createElement('div');
+        progressFill.className = 'recommendation-score-progress-fill';
+        progressFill.style.width = `${scorePercent}%`;
+        
+        progress.appendChild(progressBar);
+        progress.appendChild(progressFill);
+        
+        container.appendChild(header);
+        container.appendChild(progress);
+        
+        return container;
+    }
+    
+    setupReactionButtons(card, place) {
+        const reactionButtons = card.querySelectorAll('.reaction-btn');
+        reactionButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.getAttribute('data-action');
+                if (action) {
+                    this.handleReaction(action, place);
+                }
+            });
+        });
+    }
+    
+    handleReaction(action, place) {
+        switch(action) {
+            case 'like':
+                this.swipeCard('like', place);
+                break;
+            case 'dislike':
+                this.swipeCard('dislike', place);
+                break;
+            case 'save':
+                this.swipeCard('save', place);
+                break;
+            case 'detail':
+                this.showDetail(place);
+                break;
+        }
+    }
+    
+    addCardInteractivity(card) {
+        // Add ripple effect on click
+        card.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+            
+            const ripple = document.createElement('span');
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: rgba(217, 178, 78, 0.3);
+                left: ${x}px;
+                top: ${y}px;
+                pointer-events: none;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+            `;
+            
+            card.style.position = 'relative';
+            card.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+        
+        // Add CSS for ripple animation if not exists
+        if (!document.getElementById('ripple-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'ripple-animation-style';
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(100);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
     
     buildCardHTML(place) {
@@ -371,18 +567,8 @@ class RecommendationsSwipeManager {
     }
     
     setupDrag() {
-        const topCard = document.querySelector('.swipe-card');
-        if (!topCard) return;
-        
-        this.currentCard = topCard;
-        
-        topCard.addEventListener('mousedown', (e) => this.startDrag(e));
-        topCard.addEventListener('touchstart', (e) => this.startDrag(e), { passive: false });
-        
-        document.addEventListener('mousemove', (e) => this.drag(e));
-        document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
-        document.addEventListener('mouseup', () => this.endDrag());
-        document.addEventListener('touchend', () => this.endDrag());
+        // Disabled - only reaction buttons work now
+        // Scroll/swipe disabled, users must click reaction buttons
     }
     
     startDrag(e) {
@@ -496,42 +682,56 @@ class RecommendationsSwipeManager {
         this.hideOverlays();
     }
     
-    swipeCard(action) {
+    swipeCard(action, place = null) {
         if (!this.currentCard) return;
         
         const placeId = this.currentCard.dataset.placeId;
         this.showOverlay(action);
         
-        let translateX = 0;
-        let translateY = 0;
-        let rotate = 0;
-        
-        if (action === 'like') {
-            translateX = window.innerWidth + 300;
-            rotate = 30;
-        } else if (action === 'dislike') {
-            translateX = -window.innerWidth - 300;
-            rotate = -30;
-        } else if (action === 'save') {
-            translateY = -window.innerHeight - 300;
+        // Vibrate on action (if supported)
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
         }
         
-        this.currentCard.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease';
-        this.currentCard.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotate}deg) scale(0.7)`;
-        this.currentCard.style.opacity = '0';
+        // Update stats
+        if (action === 'like') {
+            this.stats.likes++;
+        } else if (action === 'save') {
+            this.stats.saves++;
+        }
+        this.updateStats();
         
+        // Send action to backend
         this.sendSwipeAction(placeId, action);
         
-        setTimeout(() => {
-            this.hideOverlays();
-            if (this.currentCard && this.currentCard.parentNode) {
-                this.currentCard.remove();
-            }
-            this.currentIndex++;
-            (async () => {
-                await this.renderCards();
-            })();
-        }, 600);
+        // Move to next card after action (like/dislike)
+        if (action === 'like' || action === 'dislike') {
+            setTimeout(() => {
+                this.hideOverlays();
+                if (this.currentIndex < this.cards.length - 1) {
+                    this.showNextCard();
+                } else {
+                    // No more cards
+                    this.showEmptyState();
+                }
+            }, 300);
+        } else {
+            setTimeout(() => {
+                this.hideOverlays();
+            }, 500);
+        }
+    }
+    
+    updateStats() {
+        const likesCountEl = document.getElementById('likesCount');
+        const savesCountEl = document.getElementById('savesCount');
+        
+        if (likesCountEl) {
+            likesCountEl.textContent = this.stats.likes;
+        }
+        if (savesCountEl) {
+            savesCountEl.textContent = this.stats.saves;
+        }
     }
     
     showOverlay(action) {
@@ -578,24 +778,21 @@ class RecommendationsSwipeManager {
         }
     }
     
-    showDetail() {
-        const topCard = document.querySelector('.swipe-card');
-        if (!topCard) return;
+    showDetail(place = null) {
+        if (!this.currentCard && !place) return;
         
-        const placeId = topCard.dataset.placeId;
+        const placeId = place ? place.id : this.currentCard.dataset.placeId;
         window.location.href = `/places/${placeId}/`;
     }
     
     nextCard() {
-        // Bir sonraki kartı göster (mevcut kartı dislike gibi işle ama action kaydetme)
+        // Alias for showNextCard
+        this.showNextCard();
+    }
+    
+    oldNextCard() {
+        // Legacy method - kept for compatibility
         if (!this.currentCard) return;
-        
-        const translateX = -window.innerWidth - 300;
-        const rotate = -30;
-        
-        this.currentCard.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease';
-        this.currentCard.style.transform = `translate(${translateX}px, 0) rotate(${rotate}deg) scale(0.7)`;
-        this.currentCard.style.opacity = '0';
         
         setTimeout(() => {
             this.hideOverlays();
@@ -676,21 +873,21 @@ function initRecommendationsSwipe() {
         
         window.recommendationsSwipeManager = new RecommendationsSwipeManager();
         
-        window.swipeCard = (action) => {
+        window.swipeCard = (action, place = null) => {
             if (window.recommendationsSwipeManager) {
-                window.recommendationsSwipeManager.swipeCard(action);
+                window.recommendationsSwipeManager.swipeCard(action, place);
             }
         };
         
-        window.showDetail = () => {
+        window.showDetail = (place = null) => {
             if (window.recommendationsSwipeManager) {
-                window.recommendationsSwipeManager.showDetail();
+                window.recommendationsSwipeManager.showDetail(place);
             }
         };
         
         window.nextCard = () => {
             if (window.recommendationsSwipeManager) {
-                window.recommendationsSwipeManager.nextCard();
+                window.recommendationsSwipeManager.showNextCard();
             }
         };
     } else {

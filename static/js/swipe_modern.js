@@ -102,48 +102,28 @@ class SwipeManager {
     
     setupKeyboardControls() {
         document.addEventListener('keydown', (e) => {
-            const stack = document.getElementById('cardsStack');
-            if (!stack) return;
+            if (!this.currentCard) return;
             
             // Prevent default on arrow keys
             if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
                 e.preventDefault();
             }
             
-            const currentScroll = stack.scrollTop;
-            const cardHeight = window.innerHeight;
-            const currentIndex = Math.round(currentScroll / cardHeight);
-            
             switch(e.key) {
-                case 'ArrowDown':
-                case 's':
-                    // Next card (scroll down)
-                    if (currentIndex < this.cards.length - 1) {
-                        const nextScroll = (currentIndex + 1) * cardHeight;
-                        stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
-                    }
-                    break;
-                case 'ArrowUp':
-                case 'w':
-                    // Previous card (scroll up)
-                    if (currentIndex > 0) {
-                        const prevScroll = (currentIndex - 1) * cardHeight;
-                        stack.scrollTo({ top: prevScroll, behavior: 'smooth' });
-                    }
-                    break;
                 case 'ArrowRight':
                 case 'd':
                     // Like current card
-                    if (this.currentCard) {
-                        this.swipeCard('like');
-                    }
+                    this.swipeCard('like');
                     break;
                 case 'ArrowLeft':
                 case 'a':
                     // Dislike current card
-                    if (this.currentCard) {
-                        this.swipeCard('dislike');
-                    }
+                    this.swipeCard('dislike');
+                    break;
+                case 'ArrowUp':
+                case 'w':
+                    // Save current card
+                    this.swipeCard('save');
                     break;
                 case 'Enter':
                 case ' ':
@@ -277,21 +257,36 @@ class SwipeManager {
         const stack = document.getElementById('cardsStack');
         stack.innerHTML = '';
         
-        // TikTok style: Load all cards, vertical scroll
+        // Load all cards, but only show one at a time
         if (this.cards.length === 0) {
             this.showEmptyState();
             return;
         }
         
-        // Create all cards (TikTok style - full screen, vertical stack)
+        // Create all cards (absolute positioned, only active one visible)
         for (let i = 0; i < this.cards.length; i++) {
             const card = await this.createCard(this.cards[i], i);
             if (card && card instanceof Node) {
-                // Remove absolute positioning for vertical scroll
-                card.style.position = 'relative';
-                card.style.opacity = '1';
-                card.style.transform = 'none';
-                card.style.zIndex = 'auto';
+                // Absolute positioning, only first card active
+                card.style.position = 'absolute';
+                card.style.top = '0';
+                card.style.left = '0';
+                if (i === 0) {
+                    card.classList.add('active');
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    card.style.zIndex = '10';
+                    card.style.visibility = 'visible';
+                    card.style.pointerEvents = 'auto';
+                    this.currentCard = card;
+                } else {
+                    card.classList.remove('active');
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(100vh)';
+                    card.style.zIndex = '1';
+                    card.style.visibility = 'hidden';
+                    card.style.pointerEvents = 'none';
+                }
                 
                 stack.appendChild(card);
                 
@@ -308,75 +303,44 @@ class SwipeManager {
             actionButtons.style.display = 'none';
         }
         
-        // Setup scroll-based interactions
-        this.setupScrollSnap();
-        this.setupScrollTracking();
+        // Update initial state
+        this.updateCardCounter();
+        this.updateProgress();
     }
     
-    setupScrollSnap() {
+    showNextCard() {
         const stack = document.getElementById('cardsStack');
         if (!stack) return;
-        
-        // Scroll snap is handled by CSS, but we can add smooth scroll behavior
-        let isScrolling = false;
-        
-        stack.addEventListener('scroll', () => {
-            if (!isScrolling) {
-                isScrolling = true;
-                window.requestAnimationFrame(() => {
-                    this.updateCurrentCardFromScroll();
-                    isScrolling = false;
-                });
-            }
-        });
-    }
-    
-    updateCurrentCardFromScroll() {
-        const stack = document.getElementById('cardsStack');
-        if (!stack) return;
-        
-        const scrollTop = stack.scrollTop;
-        const cardHeight = window.innerHeight;
-        const currentIndex = Math.round(scrollTop / cardHeight);
-        
-        if (currentIndex !== this.currentIndex && currentIndex < this.cards.length) {
-            this.currentIndex = currentIndex;
-            this.updateCardCounter();
-            this.updateProgress();
-            
-            // Update current card reference
-            const cards = stack.querySelectorAll('.swipe-card');
-            if (cards[currentIndex]) {
-                this.currentCard = cards[currentIndex];
-            }
-        }
-    }
-    
-    setupScrollTracking() {
-        // Track which card is currently visible
-        const stack = document.getElementById('cardsStack');
-        if (!stack) return;
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-                    const card = entry.target;
-                    const index = Array.from(stack.querySelectorAll('.swipe-card')).indexOf(card);
-                    if (index !== -1) {
-                        this.currentIndex = index;
-                        this.currentCard = card;
-                        this.updateCardCounter();
-                        this.updateProgress();
-                    }
-                }
-            });
-        }, {
-            root: stack,
-            threshold: [0.5]
-        });
         
         const cards = stack.querySelectorAll('.swipe-card');
-        cards.forEach(card => observer.observe(card));
+        const currentCardEl = cards[this.currentIndex];
+        const nextCardEl = cards[this.currentIndex + 1];
+        
+        if (!currentCardEl || !nextCardEl) return;
+        
+        // Animate current card out
+        currentCardEl.classList.remove('active');
+        currentCardEl.classList.add('prev');
+        currentCardEl.style.opacity = '0';
+        currentCardEl.style.transform = 'translateY(-100vh)';
+        currentCardEl.style.zIndex = '1';
+        currentCardEl.style.visibility = 'hidden';
+        currentCardEl.style.pointerEvents = 'none';
+        
+        // Animate next card in
+        nextCardEl.classList.remove('prev');
+        nextCardEl.classList.add('active');
+        nextCardEl.style.opacity = '1';
+        nextCardEl.style.transform = 'translateY(0)';
+        nextCardEl.style.zIndex = '10';
+        nextCardEl.style.visibility = 'visible';
+        nextCardEl.style.pointerEvents = 'auto';
+        
+        // Update references
+        this.currentIndex++;
+        this.currentCard = nextCardEl;
+        this.updateCardCounter();
+        this.updateProgress();
     }
     
     addParallaxEffect() {
@@ -677,64 +641,8 @@ class SwipeManager {
     }
     
     setupDrag() {
-        // TikTok style: Vertical swipe support for mobile
-        const stack = document.getElementById('cardsStack');
-        if (!stack) return;
-        
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let isVerticalSwipe = false;
-        
-        stack.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartTime = Date.now();
-            isVerticalSwipe = false;
-        }, { passive: true });
-        
-        stack.addEventListener('touchmove', (e) => {
-            if (!touchStartY) return;
-            
-            const touchY = e.touches[0].clientY;
-            const deltaY = touchY - touchStartY;
-            
-            // Detect vertical swipe
-            if (Math.abs(deltaY) > 10) {
-                isVerticalSwipe = true;
-            }
-        }, { passive: true });
-        
-        stack.addEventListener('touchend', (e) => {
-            if (!touchStartY || !isVerticalSwipe) {
-                touchStartY = 0;
-                return;
-            }
-            
-            const touchEndY = e.changedTouches[0].clientY;
-            const deltaY = touchEndY - touchStartY;
-            const deltaTime = Date.now() - touchStartTime;
-            const velocity = Math.abs(deltaY / deltaTime);
-            
-            // Swipe threshold: 50px or fast swipe (velocity > 0.3)
-            if (Math.abs(deltaY) > 50 || velocity > 0.3) {
-                const stack = document.getElementById('cardsStack');
-                const currentScroll = stack.scrollTop;
-                const cardHeight = window.innerHeight;
-                const currentIndex = Math.round(currentScroll / cardHeight);
-                
-                if (deltaY < 0 && currentIndex < this.cards.length - 1) {
-                    // Swipe up - next card
-                    const nextScroll = (currentIndex + 1) * cardHeight;
-                    stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
-                } else if (deltaY > 0 && currentIndex > 0) {
-                    // Swipe down - previous card
-                    const prevScroll = (currentIndex - 1) * cardHeight;
-                    stack.scrollTo({ top: prevScroll, behavior: 'smooth' });
-                }
-            }
-            
-            touchStartY = 0;
-            isVerticalSwipe = false;
-        }, { passive: true });
+        // Disabled - only reaction buttons work now
+        // Scroll/swipe disabled, users must click reaction buttons
     }
     
     startDrag(e) {
@@ -912,38 +820,22 @@ class SwipeManager {
         // Send action to backend
         this.sendSwipeAction(placeId, action);
         
-        // TikTok style: Scroll to next card after action
-        const stack = document.getElementById('cardsStack');
-        if (stack && (action === 'like' || action === 'dislike')) {
-            const currentScroll = stack.scrollTop;
-            const cardHeight = window.innerHeight;
-            const currentIndex = Math.round(currentScroll / cardHeight);
-            
-            // Scroll to next card
-            if (currentIndex < this.cards.length - 1) {
-                const nextScroll = (currentIndex + 1) * cardHeight;
-                stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
-            }
+        // Move to next card after action (like/dislike)
+        if (action === 'like' || action === 'dislike') {
+            setTimeout(() => {
+                this.hideOverlays();
+                if (this.currentIndex < this.cards.length - 1) {
+                    this.showNextCard();
+                } else {
+                    // No more cards
+                    this.showEmptyState();
+                }
+            }, 300);
+        } else {
+            setTimeout(() => {
+                this.hideOverlays();
+            }, 500);
         }
-        
-        setTimeout(() => {
-            this.hideOverlays();
-            
-            // Animate next card to top position
-            const nextCard = document.querySelector('.swipe-card');
-            if (nextCard) {
-                nextCard.style.transition = 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
-                nextCard.style.transform = 'scale(1) translateY(0)';
-                nextCard.style.opacity = '1';
-                nextCard.style.filter = 'blur(0)';
-                nextCard.style.zIndex = '5';
-            }
-            
-            // Use async IIFE to await renderCards
-            (async () => {
-                await this.renderCards();
-            })();
-        }, 700);
     }
     
     showOverlay(action) {

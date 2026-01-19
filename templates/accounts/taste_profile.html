@@ -1,27 +1,30 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Zevk Profilim - MekanKeşif{% endblock %}
 
-{% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <h2 class="mb-4">
-                <i class="bi bi-palette"></i> Zevk Profilim
-            </h2>
-            
-            <div id="tasteProfileContainer">
-                <div class="text-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages.css' %}">
 <style>
+.taste-profile-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: 80vh;
+}
+
+.taste-profile-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.taste-profile-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 12px;
+}
+
 .taste-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -29,33 +32,45 @@
     padding: 40px;
     margin-bottom: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
 }
 
 .taste-card h3 {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+}
+
+.taste-card p {
+    font-size: 18px;
+    opacity: 0.9;
 }
 
 .taste-section {
     background: white;
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e5e5e5;
 }
 
 .taste-section h5 {
     color: #667eea;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
     font-weight: 600;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .progress-custom {
-    height: 25px;
-    border-radius: 12px;
+    height: 28px;
+    border-radius: var(--radius-sm);
     background: #f0f0f0;
     overflow: hidden;
+    margin-bottom: var(--spacing-md);
 }
 
 .progress-bar-custom {
@@ -66,30 +81,221 @@
     justify-content: center;
     color: white;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 13px;
     transition: width 0.5s ease;
 }
 
 .stat-item {
     text-align: center;
-    padding: 15px;
+    padding: 24px;
     background: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 15px;
+    border-radius: 12px;
+    margin-bottom: 16px;
 }
 
 .stat-value {
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 32px;
+    font-weight: 700;
     color: #667eea;
+    display: block;
 }
 
 .stat-label {
     color: #666;
     font-size: 14px;
-    margin-top: 5px;
+    margin-top: 8px;
+    display: block;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.progress-item {
+    margin-bottom: 16px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.progress-label {
+    font-weight: 600;
+    color: #111;
+}
+
+.progress-percent {
+    color: #666;
+    font-size: 14px;
+}
+
+.progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e5e5e5;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    color: #ccc;
+    margin-bottom: 24px;
+}
+
+.empty-state h4 {
+    color: #111;
+    margin-bottom: 16px;
+    font-size: 24px;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.empty-progress {
+    height: 30px;
+    border-radius: 8px;
+    background: #f0f0f0;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.empty-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.alert {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alert-info {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+.alert-danger {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef5350;
+}
+
+.alert-warning {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffb74d;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-container {
+    text-align: center;
+    padding: 60px 40px;
+}
+
+.loading-container p {
+    margin-top: 16px;
+    color: #666;
 }
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="taste-profile-page">
+    <div class="taste-profile-header">
+        <h1>
+            <i class="bi bi-palette"></i> Zevk Profilim
+        </h1>
+    </div>
+    
+    <div id="tasteProfileContainer">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p style="margin-top: 16px; color: #666;">Yükleniyor...</p>
+        </div>
+    </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -103,10 +309,16 @@ async function loadTasteProfile() {
         const response = await fetch('/api/users/me/taste-profile/', {
             credentials: 'same-origin'
         });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
         const data = await response.json();
         
         if (data.success && data.has_enough_data) {
             container.innerHTML = buildTasteProfileHTML(data);
+            animateProgressBars();
         } else {
             container.innerHTML = buildEmptyStateHTML(data);
         }
@@ -114,7 +326,8 @@ async function loadTasteProfile() {
         console.error('Error loading taste profile:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle"></i> Zevk profili yüklenirken bir hata oluştu.
+                <i class="bi bi-exclamation-triangle"></i> 
+                Zevk profili yüklenirken bir hata oluştu.
             </div>
         `;
     }
@@ -122,29 +335,23 @@ async function loadTasteProfile() {
 
 function buildTasteProfileHTML(data) {
     let html = `
-        <div class="taste-card text-center">
-            <h3><i class="bi bi-stars"></i> ${data.style_label}</h3>
-            <p class="lead mb-0">Sen ${data.style_label.toLowerCase()} mekan seven birisin.</p>
+        <div class="taste-card">
+            <h3><i class="bi bi-stars"></i> ${data.style_label || 'Zevk Profili'}</h3>
+            <p>Sen ${(data.style_label || 'özel').toLowerCase()} mekan seven birisin.</p>
         </div>
         
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <div class="stat-value">${data.interaction_count}</div>
-                    <div class="stat-label">Toplam Etkileşim</div>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-value">${data.interaction_count || 0}</span>
+                <span class="stat-label">Toplam Etkileşim</span>
             </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <div class="stat-value">${Object.keys(data.category_weights || {}).length}</div>
-                    <div class="stat-label">Favori Kategori</div>
-                </div>
+            <div class="stat-item">
+                <span class="stat-value">${Object.keys(data.category_weights || {}).length}</span>
+                <span class="stat-label">Favori Kategori</span>
             </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <div class="stat-value">${Object.keys(data.atmosphere_weights || {}).length}</div>
-                    <div class="stat-label">Atmosfer Tercihi</div>
-                </div>
+            <div class="stat-item">
+                <span class="stat-value">${Object.keys(data.atmosphere_weights || {}).length}</span>
+                <span class="stat-label">Atmosfer Tercihi</span>
             </div>
         </div>
     `;
@@ -160,10 +367,10 @@ function buildTasteProfileHTML(data) {
                 ${categories.map(([cat, weight]) => {
                     const percent = Math.round(weight * 100);
                     return `
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="fw-bold">${getCategoryLabel(cat)}</span>
-                                <span class="text-muted">%${percent}</span>
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span class="progress-label">${getCategoryLabel(cat)}</span>
+                                <span class="progress-percent">%${percent}</span>
                             </div>
                             <div class="progress-custom">
                                 <div class="progress-bar-custom" style="width: ${percent}%">
@@ -185,14 +392,14 @@ function buildTasteProfileHTML(data) {
         html += `
             <div class="taste-section">
                 <h5><i class="bi bi-cloud"></i> Atmosfer Tercihlerin</h5>
-                <div class="row">
+                <div class="progress-grid">
                     ${atmospheres.map(([atm, weight]) => {
                         const percent = Math.round(weight * 100);
                         return `
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="fw-bold">${atm}</span>
-                                    <span class="text-muted">%${percent}</span>
+                            <div class="progress-item">
+                                <div class="progress-header">
+                                    <span class="progress-label">${atm}</span>
+                                    <span class="progress-percent">%${percent}</span>
                                 </div>
                                 <div class="progress-custom">
                                     <div class="progress-bar-custom" style="width: ${percent}%">
@@ -224,20 +431,22 @@ function buildTasteProfileHTML(data) {
         html += `
             <div class="taste-section">
                 <h5><i class="bi bi-people"></i> Kiminle Gidilir?</h5>
-                <p class="text-muted mb-3">Daha çok ${contexts.map(([ctx, weight]) => {
-                    const label = contextLabels[ctx] || ctx;
-                    const percent = Math.round(weight * 100);
-                    return `${label.toLowerCase()} (%${percent})`;
-                }).slice(0, 3).join(', ')} mekanları beğeniyorsun.</p>
-                <div class="row">
+                <p style="color: #666; margin-bottom: 16px;">
+                    Daha çok ${contexts.map(([ctx, weight]) => {
+                        const label = contextLabels[ctx] || ctx;
+                        const percent = Math.round(weight * 100);
+                        return `${label.toLowerCase()} (%${percent})`;
+                    }).slice(0, 3).join(', ')} mekanları beğeniyorsun.
+                </p>
+                <div class="progress-grid">
                     ${contexts.map(([ctx, weight]) => {
                         const label = contextLabels[ctx] || ctx;
                         const percent = Math.round(weight * 100);
                         return `
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="fw-bold">${label}</span>
-                                    <span class="text-muted">%${percent}</span>
+                            <div class="progress-item">
+                                <div class="progress-header">
+                                    <span class="progress-label">${label}</span>
+                                    <span class="progress-percent">%${percent}</span>
                                 </div>
                                 <div class="progress-custom">
                                     <div class="progress-bar-custom" style="width: ${percent}%">
@@ -255,8 +464,10 @@ function buildTasteProfileHTML(data) {
     html += `
         <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> 
-            <strong>Not:</strong> Yeni mekanlar beğendikçe zevk profilin otomatik olarak yenilenecek.
-            <button class="btn btn-sm btn-outline-primary ms-2" onclick="recalculateProfile()">
+            <div style="flex: 1;">
+                <strong>Not:</strong> Yeni mekanlar beğendikçe zevk profilin otomatik olarak yenilenecek.
+            </div>
+            <button class="btn btn-sm btn-outline-primary" onclick="recalculateProfile()">
                 <i class="bi bi-arrow-clockwise"></i> Şimdi Güncelle
             </button>
         </div>
@@ -266,30 +477,29 @@ function buildTasteProfileHTML(data) {
 }
 
 function buildEmptyStateHTML(data) {
+    const progress = Math.min(100, ((data.interaction_count || 0) / (data.min_interactions || 5)) * 100);
+    
     return `
-        <div class="card">
-            <div class="card-body text-center py-5">
-                <i class="bi bi-palette" style="font-size: 64px; color: #ccc;"></i>
-                <h4 class="mt-3">Zevk Profili Henüz Oluşturulamadı</h4>
-                <p class="text-muted mb-4">
-                    ${data.message || 'Zevk profilini çıkarabilmemiz için birkaç mekan beğenmen gerekiyor.'}
-                </p>
-                <div class="mb-3">
-                    <div class="progress" style="height: 30px;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: ${Math.min(100, (data.interaction_count || 0) / (data.min_interactions || 5) * 100)}%">
-                            ${data.interaction_count || 0} / ${data.min_interactions || 5}
-                        </div>
-                    </div>
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-palette"></i>
+            </div>
+            <h4>Zevk Profili Henüz Oluşturulamadı</h4>
+            <p>
+                ${data.message || 'Zevk profilini çıkarabilmemiz için birkaç mekan beğenmen gerekiyor.'}
+            </p>
+            <div class="empty-progress" style="margin-bottom: var(--spacing-lg);">
+                <div class="empty-progress-bar" style="width: ${progress}%">
+                    ${data.interaction_count || 0} / ${data.min_interactions || 5}
                 </div>
-                <div>
-                    <a href="{% url 'places:discover_swipe' %}" class="btn btn-primary me-2">
-                        <i class="bi bi-arrow-left-right"></i> Swipe ile Keşfet
-                    </a>
-                    <a href="{% url 'places:discover' %}" class="btn btn-outline-primary">
-                        <i class="bi bi-compass"></i> Keşfet
-                    </a>
-                </div>
+            </div>
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'places:discover_swipe' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left-right"></i> Swipe ile Keşfet
+                </a>
+                <a href="{% url 'places:discover' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-compass"></i> Keşfet
+                </a>
             </div>
         </div>
     `;
@@ -309,9 +519,20 @@ function getCategoryLabel(cat) {
     return labels[cat] || cat.charAt(0).toUpperCase() + cat.slice(1);
 }
 
+function animateProgressBars() {
+    const progressBars = document.querySelectorAll('.progress-bar-custom');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 100);
+    });
+}
+
 async function recalculateProfile() {
     const container = document.getElementById('tasteProfileContainer');
-    container.innerHTML = '<div class="text-center"><div class="spinner-border"></div><p>Yeniden hesaplanıyor...</p></div>';
+    container.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Yeniden hesaplanıyor...</p></div>';
     
     try {
         const response = await fetch('/api/users/me/taste-profile/recalculate/', {
@@ -323,14 +544,18 @@ async function recalculateProfile() {
             credentials: 'same-origin'
         });
         
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
         const data = await response.json();
         
         if (data.success) {
-            // Profili yeniden yükle
             loadTasteProfile();
         } else {
             container.innerHTML = `
                 <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
                     ${data.message || 'Yeniden hesaplama başarısız oldu.'}
                 </div>
             `;
@@ -339,6 +564,7 @@ async function recalculateProfile() {
         console.error('Error recalculating:', error);
         container.innerHTML = `
             <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i>
                 Bir hata oluştu. Lütfen tekrar deneyin.
             </div>
         `;
