@@ -1,6 +1,6 @@
 /**
  * Modern Swipe Page JavaScript
- * Advanced animations and interactions
+ * Enhanced with animations, interactivity and smooth transitions
  */
 
 class SwipeManager {
@@ -17,15 +17,22 @@ class SwipeManager {
         this.lastMoveTime = 0;
         this.lastMoveX = 0;
         this.lastMoveY = 0;
+        this.progressBar = null;
+        this.cardObserver = null;
+        this.stats = {
+            likes: 0,
+            saves: 0
+        };
         
         this.init();
     }
     
     init() {
         this.addBodyClass();
+        this.createProgressBar();
         this.setupGlobalOverlays();
         this.setupKeyboardControls();
-        // Load places immediately without loading state
+        this.setupIntersectionObserver();
         this.loadPlaces();
     }
     
@@ -33,8 +40,61 @@ class SwipeManager {
         document.body.classList.add('swipe-page');
     }
     
+    createProgressBar() {
+        const progressBar = document.createElement('div');
+        progressBar.id = 'swipe-progress-bar';
+        progressBar.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #d4af37, #f5d76e);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        `;
+        document.body.appendChild(progressBar);
+        this.progressBar = progressBar;
+    }
+    
+    updateProgress() {
+        if (this.progressBar && this.cards.length > 0) {
+            const progress = (this.currentIndex / this.cards.length) * 100;
+            this.progressBar.style.width = `${progress}%`;
+        }
+    }
+    
+    updateStats() {
+        const likesCountEl = document.getElementById('likesCount');
+        const savesCountEl = document.getElementById('savesCount');
+        
+        if (likesCountEl) {
+            likesCountEl.textContent = this.stats.likes;
+        }
+        if (savesCountEl) {
+            savesCountEl.textContent = this.stats.saves;
+        }
+    }
+    
+    updateCardCounter() {
+        const cardCounter = document.getElementById('cardCounter');
+        const currentCardIndex = document.getElementById('currentCardIndex');
+        const totalCards = document.getElementById('totalCards');
+        
+        if (cardCounter && this.cards.length > 0) {
+            cardCounter.style.display = 'block';
+            
+            if (currentCardIndex) {
+                currentCardIndex.textContent = this.currentIndex + 1;
+            }
+            if (totalCards) {
+                totalCards.textContent = this.cards.length;
+            }
+        }
+    }
+    
     setupGlobalOverlays() {
-        // Overlays are already in HTML, just cache references
         this.overlayLike = document.querySelector('.overlay-like');
         this.overlayNope = document.querySelector('.overlay-nope');
         this.overlaySave = document.querySelector('.overlay-save');
@@ -42,27 +102,52 @@ class SwipeManager {
     
     setupKeyboardControls() {
         document.addEventListener('keydown', (e) => {
-            if (!this.currentCard) return;
+            const stack = document.getElementById('cardsStack');
+            if (!stack) return;
+            
+            // Prevent default on arrow keys
+            if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+            }
+            
+            const currentScroll = stack.scrollTop;
+            const cardHeight = window.innerHeight;
+            const currentIndex = Math.round(currentScroll / cardHeight);
             
             switch(e.key) {
-                case 'ArrowRight':
-                case 'd':
-                    e.preventDefault();
-                    this.swipeCard('like');
-                    break;
-                case 'ArrowLeft':
-                case 'a':
-                    e.preventDefault();
-                    this.swipeCard('dislike');
+                case 'ArrowDown':
+                case 's':
+                    // Next card (scroll down)
+                    if (currentIndex < this.cards.length - 1) {
+                        const nextScroll = (currentIndex + 1) * cardHeight;
+                        stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
+                    }
                     break;
                 case 'ArrowUp':
                 case 'w':
-                    e.preventDefault();
-                    this.swipeCard('save');
+                    // Previous card (scroll up)
+                    if (currentIndex > 0) {
+                        const prevScroll = (currentIndex - 1) * cardHeight;
+                        stack.scrollTo({ top: prevScroll, behavior: 'smooth' });
+                    }
                     break;
-                case 'ArrowDown':
-                case 's':
+                case 'ArrowRight':
+                case 'd':
+                    // Like current card
+                    if (this.currentCard) {
+                        this.swipeCard('like');
+                    }
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    // Dislike current card
+                    if (this.currentCard) {
+                        this.swipeCard('dislike');
+                    }
+                    break;
                 case 'Enter':
+                case ' ':
+                    // Show detail
                     e.preventDefault();
                     this.showDetail();
                     break;
@@ -70,9 +155,76 @@ class SwipeManager {
         });
     }
     
+    setupIntersectionObserver() {
+        // Observe cards for animations
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+        
+        this.cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('card-visible');
+                    this.animateCardElements(entry.target);
+                }
+            });
+        }, options);
+    }
+    
+    animateCardElements(card) {
+        // Animate tags
+        const tags = card.querySelectorAll('.card-tag');
+        tags.forEach((tag, index) => {
+            setTimeout(() => {
+                tag.style.opacity = '0';
+                tag.style.transform = 'translateY(20px)';
+                tag.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+                
+                requestAnimationFrame(() => {
+                    tag.style.opacity = '1';
+                    tag.style.transform = 'translateY(0)';
+                });
+            }, index * 100);
+        });
+        
+        // Animate features
+        const features = card.querySelectorAll('.card-feature');
+        features.forEach((feature, index) => {
+            setTimeout(() => {
+                feature.style.opacity = '0';
+                feature.style.transform = 'translateX(-20px)';
+                feature.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+                
+                requestAnimationFrame(() => {
+                    feature.style.opacity = '1';
+                    feature.style.transform = 'translateX(0)';
+                });
+            }, (tags.length * 100) + (index * 80));
+        });
+        
+        // Animate menu items
+        const menuItems = card.querySelectorAll('.card-menu-item');
+        menuItems.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.opacity = '0';
+                item.style.transform = 'scale(0.8)';
+                item.style.transition = 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+                
+                requestAnimationFrame(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'scale(1)';
+                });
+            }, (features.length * 80) + (index * 60));
+        });
+    }
+    
     async loadPlaces() {
         try {
-            console.log('Loading places...');
+            // Show loading animation
+            this.showLoadingAnimation();
+            
             const response = await fetch('/api/places/discover/', {
                 method: 'GET',
                 headers: {
@@ -81,11 +233,8 @@ class SwipeManager {
                 credentials: 'same-origin'
             });
             
-            console.log('Response status:', response.status);
-            
             if (!response.ok) {
                 if (response.status === 401) {
-                    console.error('Authentication required');
                     this.showError('Lütfen giriş yapın');
                     return;
                 }
@@ -93,18 +242,17 @@ class SwipeManager {
             }
             
             const data = await response.json();
-            console.log('Response data:', data);
             
             if (data.success && data.places && Array.isArray(data.places)) {
                 if (data.places.length > 0) {
                     this.cards = data.places;
                     await this.renderCards();
+                    this.updateProgress();
+                    this.updateCardCounter();
                 } else {
-                    console.log('No places found');
                     this.showEmptyState();
                 }
             } else {
-                console.error('Invalid response format:', data);
                 this.showError('Geçersiz yanıt formatı');
             }
         } catch (error) {
@@ -113,43 +261,164 @@ class SwipeManager {
         }
     }
     
+    showLoadingAnimation() {
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
+        
+        stack.innerHTML = `
+            <div class="loading">
+                <div class="spinner-border"></div>
+                <p>Mekanlar yükleniyor...</p>
+            </div>
+        `;
+    }
+    
     async renderCards() {
         const stack = document.getElementById('cardsStack');
         stack.innerHTML = '';
         
-        const cardsToShow = this.cards.slice(this.currentIndex, this.currentIndex + 3);
-        
-        if (cardsToShow.length === 0) {
+        // TikTok style: Load all cards, vertical scroll
+        if (this.cards.length === 0) {
             this.showEmptyState();
             return;
         }
         
-        // Create cards asynchronously and wait for each one
-        for (let i = 0; i < cardsToShow.length; i++) {
-            const card = await this.createCard(cardsToShow[i], i);
+        // Create all cards (TikTok style - full screen, vertical stack)
+        for (let i = 0; i < this.cards.length; i++) {
+            const card = await this.createCard(this.cards[i], i);
             if (card && card instanceof Node) {
+                // Remove absolute positioning for vertical scroll
+                card.style.position = 'relative';
+                card.style.opacity = '1';
+                card.style.transform = 'none';
+                card.style.zIndex = 'auto';
+                
                 stack.appendChild(card);
+                
+                // Observe card for intersection (for lazy loading, animations, etc.)
+                if (this.cardObserver) {
+                    this.cardObserver.observe(card);
+                }
             }
         }
         
+        // Hide legacy action buttons (reaction buttons are now in cards)
         const actionButtons = document.getElementById('actionButtons');
         if (actionButtons) {
-            actionButtons.style.display = 'flex';
+            actionButtons.style.display = 'none';
         }
-        this.setupDrag();
+        
+        // Setup scroll-based interactions
+        this.setupScrollSnap();
+        this.setupScrollTracking();
+    }
+    
+    setupScrollSnap() {
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
+        
+        // Scroll snap is handled by CSS, but we can add smooth scroll behavior
+        let isScrolling = false;
+        
+        stack.addEventListener('scroll', () => {
+            if (!isScrolling) {
+                isScrolling = true;
+                window.requestAnimationFrame(() => {
+                    this.updateCurrentCardFromScroll();
+                    isScrolling = false;
+                });
+            }
+        });
+    }
+    
+    updateCurrentCardFromScroll() {
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
+        
+        const scrollTop = stack.scrollTop;
+        const cardHeight = window.innerHeight;
+        const currentIndex = Math.round(scrollTop / cardHeight);
+        
+        if (currentIndex !== this.currentIndex && currentIndex < this.cards.length) {
+            this.currentIndex = currentIndex;
+            this.updateCardCounter();
+            this.updateProgress();
+            
+            // Update current card reference
+            const cards = stack.querySelectorAll('.swipe-card');
+            if (cards[currentIndex]) {
+                this.currentCard = cards[currentIndex];
+            }
+        }
+    }
+    
+    setupScrollTracking() {
+        // Track which card is currently visible
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    const card = entry.target;
+                    const index = Array.from(stack.querySelectorAll('.swipe-card')).indexOf(card);
+                    if (index !== -1) {
+                        this.currentIndex = index;
+                        this.currentCard = card;
+                        this.updateCardCounter();
+                        this.updateProgress();
+                    }
+                }
+            });
+        }, {
+            root: stack,
+            threshold: [0.5]
+        });
+        
+        const cards = stack.querySelectorAll('.swipe-card');
+        cards.forEach(card => observer.observe(card));
+    }
+    
+    addParallaxEffect() {
+        const heroImages = document.querySelectorAll('.card-hero-image');
+        const cards = document.querySelectorAll('.swipe-card');
+        
+        cards.forEach((card, cardIndex) => {
+            if (cardIndex !== 0) return; // Only for top card
+            
+            const heroImage = card.querySelector('.card-hero-image');
+            if (!heroImage) return;
+            
+            let isHovering = false;
+            
+            card.addEventListener('mousemove', (e) => {
+                if (!isHovering || this.isDragging) return;
+                
+                const rect = card.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width - 0.5) * 20;
+                const y = ((e.clientY - rect.top) / rect.height - 0.5) * 20;
+                
+                heroImage.style.transform = `scale(1.08) translate(${x}px, ${y}px)`;
+            });
+            
+            card.addEventListener('mouseenter', () => {
+                isHovering = true;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                isHovering = false;
+                heroImage.style.transform = 'scale(1.05)';
+            });
+        });
     }
     
     async createCard(place, index) {
         const card = document.createElement('div');
         card.className = 'swipe-card';
         card.dataset.placeId = place.id;
-        card.style.zIndex = 5 - index;
+        card.dataset.index = index;
         
-        // Initial transform for stack effect
-        if (index > 0) {
-            card.style.transform = `scale(${1 - index * 0.02}) translateY(${index * 20}px)`;
-            card.style.opacity = 1 - index * 0.3;
-        }
+        // TikTok style: No stacking, full screen cards
         
         // Use SwipeCardBuilder for rich card content
         if (window.SwipeCardBuilder) {
@@ -168,20 +437,28 @@ class SwipeManager {
                 console.error('Error loading taste profile:', error);
             }
             
-            // Build card HTML
-            let cardHTML = builder.buildCardHTML(place);
+            // Get photo info for banner
+            const photos = place.photos || [];
+            const photoIndex = 0; // Start with first photo (can be extended for slider)
+            const totalPhotos = photos.length;
+            
+            // Build card content using DOM elements (not innerHTML)
+            const cardContent = builder.buildCardContent(place, photoIndex, totalPhotos);
+            
+            // Append content first to make querySelector work
+            card.appendChild(cardContent);
             
             // Add taste profile matching if available
             if (matchResult && matchResult.hasMatch) {
                 const matchingHTML = builder.buildTasteProfileMatchingHTML(place, matchResult, tasteProfile);
-                // Insert after card-content opening tag
-                cardHTML = cardHTML.replace(
-                    '<div class="card-content">',
-                    `<div class="card-content">${matchingHTML}`
-                );
+                const contentSection = card.querySelector('.card-content');
+                if (contentSection) {
+                    contentSection.insertAdjacentHTML('afterbegin', matchingHTML);
+                }
             }
             
-            card.innerHTML = cardHTML;
+            // Setup reaction buttons event listeners
+            this.setupReactionButtons(card, place);
         } else {
             // Fallback to simple card
             const photo = place.photos && place.photos.length > 0 ? place.photos[0] : null;
@@ -192,7 +469,98 @@ class SwipeManager {
             card.innerHTML = this.buildCardHTML(place, photo, categories, tags, features, hours);
         }
         
+        // Add interactive effects
+        this.addCardInteractivity(card);
+        
         return card;
+    }
+    
+    setupReactionButtons(card, place) {
+        const reactionButtons = card.querySelectorAll('.reaction-btn');
+        reactionButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.getAttribute('data-action');
+                if (action) {
+                    this.handleReaction(action, place);
+                }
+            });
+        });
+    }
+    
+    handleReaction(action, place) {
+        switch(action) {
+            case 'like':
+                this.swipeCard('like', place);
+                break;
+            case 'dislike':
+                this.swipeCard('dislike', place);
+                break;
+            case 'save':
+                this.swipeCard('save', place);
+                break;
+            case 'detail':
+                this.showDetail(place);
+                break;
+        }
+    }
+    
+    addCardInteractivity(card) {
+        // Add glow effect on hover for buttons
+        const buttons = card.querySelectorAll('a, button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'scale(1.05)';
+                btn.style.transition = 'all 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Add ripple effect on click
+        card.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+            
+            const ripple = document.createElement('span');
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: rgba(212, 175, 55, 0.3);
+                left: ${x}px;
+                top: ${y}px;
+                pointer-events: none;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+            `;
+            
+            card.style.position = 'relative';
+            card.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+        
+        // Add CSS for ripple animation if not exists
+        if (!document.getElementById('ripple-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'ripple-animation-style';
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(100);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
     
     buildCardHTML(place, photo, categories, tags, features, hours) {
@@ -309,18 +677,64 @@ class SwipeManager {
     }
     
     setupDrag() {
-        const topCard = document.querySelector('.swipe-card');
-        if (!topCard) return;
+        // TikTok style: Vertical swipe support for mobile
+        const stack = document.getElementById('cardsStack');
+        if (!stack) return;
         
-        this.currentCard = topCard;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        let isVerticalSwipe = false;
         
-        topCard.addEventListener('mousedown', (e) => this.startDrag(e));
-        topCard.addEventListener('touchstart', (e) => this.startDrag(e), { passive: false });
+        stack.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            isVerticalSwipe = false;
+        }, { passive: true });
         
-        document.addEventListener('mousemove', (e) => this.drag(e));
-        document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
-        document.addEventListener('mouseup', () => this.endDrag());
-        document.addEventListener('touchend', () => this.endDrag());
+        stack.addEventListener('touchmove', (e) => {
+            if (!touchStartY) return;
+            
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchY - touchStartY;
+            
+            // Detect vertical swipe
+            if (Math.abs(deltaY) > 10) {
+                isVerticalSwipe = true;
+            }
+        }, { passive: true });
+        
+        stack.addEventListener('touchend', (e) => {
+            if (!touchStartY || !isVerticalSwipe) {
+                touchStartY = 0;
+                return;
+            }
+            
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaY = touchEndY - touchStartY;
+            const deltaTime = Date.now() - touchStartTime;
+            const velocity = Math.abs(deltaY / deltaTime);
+            
+            // Swipe threshold: 50px or fast swipe (velocity > 0.3)
+            if (Math.abs(deltaY) > 50 || velocity > 0.3) {
+                const stack = document.getElementById('cardsStack');
+                const currentScroll = stack.scrollTop;
+                const cardHeight = window.innerHeight;
+                const currentIndex = Math.round(currentScroll / cardHeight);
+                
+                if (deltaY < 0 && currentIndex < this.cards.length - 1) {
+                    // Swipe up - next card
+                    const nextScroll = (currentIndex + 1) * cardHeight;
+                    stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
+                } else if (deltaY > 0 && currentIndex > 0) {
+                    // Swipe down - previous card
+                    const prevScroll = (currentIndex - 1) * cardHeight;
+                    stack.scrollTo({ top: prevScroll, behavior: 'smooth' });
+                }
+            }
+            
+            touchStartY = 0;
+            isVerticalSwipe = false;
+        }, { passive: true });
     }
     
     startDrag(e) {
@@ -367,15 +781,40 @@ class SwipeManager {
         this.currentX = clientX - centerX;
         this.currentY = clientY - centerY;
         
+        // Enhanced rotation with smooth easing
         const rotate = this.currentX * 0.1;
-        this.currentCard.style.transform = `translate(${this.currentX}px, ${this.currentY}px) rotate(${rotate}deg)`;
+        const scale = 1 - Math.abs(this.currentX) / window.innerWidth * 0.1;
         
-        this.updateOverlay();
+        this.currentCard.style.transform = `translate(${this.currentX}px, ${this.currentY}px) rotate(${rotate}deg) scale(${Math.max(0.95, scale)})`;
+        
+        // Update overlay opacity based on distance
+        const distance = Math.abs(this.currentX);
+        const opacity = Math.min(distance / 150, 1);
+        
+        this.updateOverlay(opacity);
+        
+        // Update next card position
+        this.updateNextCard();
         
         e.preventDefault();
     }
     
-    updateOverlay() {
+    updateNextCard() {
+        const nextCard = document.querySelector('.swipe-card:nth-child(2)');
+        if (nextCard && this.currentCard) {
+            const distance = Math.abs(this.currentX);
+            const progress = Math.min(distance / 200, 1);
+            
+            const baseScale = 0.98;
+            const baseTranslate = 20;
+            
+            nextCard.style.transform = `scale(${baseScale + progress * 0.02}) translateY(${baseTranslate - progress * 10}px)`;
+            nextCard.style.opacity = 0.7 + progress * 0.3;
+            nextCard.style.filter = `blur(${2 - progress * 2}px)`;
+        }
+    }
+    
+    updateOverlay(opacity = 1) {
         if (!this.overlayLike || !this.overlayNope || !this.overlaySave) return;
         
         this.overlayLike.classList.remove('show');
@@ -384,10 +823,13 @@ class SwipeManager {
         
         if (this.currentX > 100) {
             this.overlayLike.classList.add('show');
+            this.overlayLike.style.opacity = opacity;
         } else if (this.currentX < -100) {
             this.overlayNope.classList.add('show');
+            this.overlayNope.style.opacity = opacity;
         } else if (this.currentY < -100) {
             this.overlaySave.classList.add('show');
+            this.overlaySave.style.opacity = opacity;
         }
     }
     
@@ -419,10 +861,23 @@ class SwipeManager {
         } else {
             this.snapBack();
         }
+        
+        // Reset next card
+        this.resetNextCard();
+    }
+    
+    resetNextCard() {
+        const nextCard = document.querySelector('.swipe-card:nth-child(2)');
+        if (nextCard) {
+            nextCard.style.transition = 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+            nextCard.style.transform = 'scale(0.98) translateY(20px)';
+            nextCard.style.opacity = '0.7';
+            nextCard.style.filter = 'blur(2px)';
+        }
     }
     
     snapBack() {
-        this.currentCard.style.transition = 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s ease';
+        this.currentCard.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease';
         this.currentCard.style.transform = '';
         this.currentCard.style.opacity = '1';
         
@@ -430,48 +885,65 @@ class SwipeManager {
             if (this.currentCard) {
                 this.currentCard.style.transition = '';
             }
-        }, 400);
+        }, 500);
         
         this.hideOverlays();
     }
     
-    swipeCard(action) {
+    swipeCard(action, place = null) {
         if (!this.currentCard) return;
         
         const placeId = this.currentCard.dataset.placeId;
         this.showOverlay(action);
         
-        let translateX = 0;
-        let translateY = 0;
-        let rotate = 0;
-        
-        if (action === 'like') {
-            translateX = window.innerWidth + 300;
-            rotate = 30;
-        } else if (action === 'dislike') {
-            translateX = -window.innerWidth - 300;
-            rotate = -30;
-        } else if (action === 'save') {
-            translateY = -window.innerHeight - 300;
+        // Vibrate on action (if supported)
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
         }
         
-        this.currentCard.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease';
-        this.currentCard.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotate}deg) scale(0.7)`;
-        this.currentCard.style.opacity = '0';
+        // Update stats
+        if (action === 'like') {
+            this.stats.likes++;
+        } else if (action === 'save') {
+            this.stats.saves++;
+        }
+        this.updateStats();
         
+        // Send action to backend
         this.sendSwipeAction(placeId, action);
+        
+        // TikTok style: Scroll to next card after action
+        const stack = document.getElementById('cardsStack');
+        if (stack && (action === 'like' || action === 'dislike')) {
+            const currentScroll = stack.scrollTop;
+            const cardHeight = window.innerHeight;
+            const currentIndex = Math.round(currentScroll / cardHeight);
+            
+            // Scroll to next card
+            if (currentIndex < this.cards.length - 1) {
+                const nextScroll = (currentIndex + 1) * cardHeight;
+                stack.scrollTo({ top: nextScroll, behavior: 'smooth' });
+            }
+        }
         
         setTimeout(() => {
             this.hideOverlays();
-            if (this.currentCard && this.currentCard.parentNode) {
-                this.currentCard.remove();
+            
+            // Animate next card to top position
+            const nextCard = document.querySelector('.swipe-card');
+            if (nextCard) {
+                nextCard.style.transition = 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+                nextCard.style.transform = 'scale(1) translateY(0)';
+                nextCard.style.opacity = '1';
+                nextCard.style.filter = 'blur(0)';
+                nextCard.style.zIndex = '5';
             }
-            this.currentIndex++;
+            
             // Use async IIFE to await renderCards
             (async () => {
                 await this.renderCards();
             })();
-        }, 600);
+        }, 700);
     }
     
     showOverlay(action) {
@@ -489,7 +961,10 @@ class SwipeManager {
     
     hideOverlays() {
         [this.overlayLike, this.overlayNope, this.overlaySave].forEach(overlay => {
-            if (overlay) overlay.classList.remove('show');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.style.opacity = '';
+            }
         });
     }
     
@@ -523,7 +998,15 @@ class SwipeManager {
         if (!topCard) return;
         
         const placeId = topCard.dataset.placeId;
-        window.location.href = `/places/${placeId}/`;
+        
+        // Add exit animation
+        topCard.style.transition = 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s ease';
+        topCard.style.transform = 'scale(0.95)';
+        topCard.style.opacity = '0.8';
+        
+        setTimeout(() => {
+            window.location.href = `/places/${placeId}/`;
+        }, 200);
     }
     
     showEmptyState() {
