@@ -15,14 +15,6 @@ body.recommendations-page * {
     box-sizing: border-box;
 }
 
-body.recommendations-page {
-    background: #ffffff !important;
-    color: #1a1a1a !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
 body.recommendations-page .navbar,
 body.recommendations-page footer,
 body.recommendations-page nav,
@@ -46,17 +38,6 @@ body.recommendations-page main {
     padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 0 !important;
-}
-
-body.recommendations-page html {
-    background: #ffffff !important;
-    overflow: hidden !important;
 }
 </style>
 {% endblock %}
@@ -72,6 +53,11 @@ if (typeof SwipeCardBuilder !== 'undefined') {
 } else {
     console.error('✗ SwipeCardBuilder NOT loaded');
 }
+
+// Bu sayfada body'ye özel sınıf ekle (layout sadece öneri swipe'ta değişsin)
+document.addEventListener('DOMContentLoaded', function () {
+    document.body.classList.add('recommendations-page');
+});
 </script>
 {% endblock %}
 
@@ -128,4 +114,34 @@ if (typeof SwipeCardBuilder !== 'undefined') {
         <span id="currentCardIndex">0</span>/<span id="totalCards">0</span>
     </div>
 </div>
+
+<!-- Harita Modal -->
+<div id="mapModal" class="map-modal">
+    <div class="map-modal-content">
+        <div class="map-modal-header">
+            <h3 id="mapModalTitle">Haritada Göster</h3>
+            <button class="map-modal-close" onclick="closeMapModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="map-modal-body">
+            <div id="mapContainer" class="map-container"></div>
+            <div class="map-info">
+                <div id="mapPlaceInfo" class="map-place-info"></div>
+                <div class="map-actions">
+                    <button id="btnGetRoute" class="btn-get-route" onclick="getRoute()">
+                        <i class="bi bi-signpost"></i> Rota Al
+                    </button>
+                    <button id="btnShowNearby" class="btn-show-nearby" onclick="showNearbyPlaces()">
+                        <i class="bi bi-geo-alt"></i> Yakındakileri Göster
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:"AIzaSyDummyKey" }}&libraries=places,directions" async defer></script>
+<script src="{% static 'js/map_integration.js' %}?v=1.0"></script>
 {% endblock %}

@@ -103,8 +103,24 @@ class DiscoverPage {
             Object.entries(this.filters).forEach(([key, value]) => {
                 if (value) params.append(key, value);
             });
+            // Normal keşfet sayfası için tüm mekanları göster
+            params.append('show_all', 'true');
             
-            const response = await fetch(`/api/places/discover/?${params.toString()}`);
+            const response = await fetch(`/api/places/discover/?${params.toString()}`, {
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    container.innerHTML = '<div class="error-state"><i class="bi bi-exclamation-triangle"></i><p>Lütfen giriş yapın</p><a href="/accounts/login/" class="btn btn-primary">Giriş Yap</a></div>';
+                    return;
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success && data.places) {
@@ -115,7 +131,7 @@ class DiscoverPage {
             }
         } catch (error) {
             console.error('Error loading places:', error);
-            container.innerHTML = '<div class="error-state"><i class="bi bi-exclamation-triangle"></i><p>Bir hata oluştu</p></div>';
+            container.innerHTML = '<div class="error-state"><i class="bi bi-exclamation-triangle"></i><p>Bir hata oluştu: ' + error.message + '</p></div>';
         }
     }
     
@@ -142,17 +158,20 @@ class DiscoverPage {
     }
     
     renderPlaceCard(place) {
-        const photo = place.photos && place.photos.length > 0 ? place.photos[0] : null;
+        const photo = place.photos && place.photos.length > 0 ? place.photos[0] : (place.first_photo || null);
         const rating = place.average_rating || 0;
         const ratingStars = this.renderStars(rating);
         const tags = (place.tags || []).slice(0, 3).map(tag => 
             `<span class="tag">${this.escapeHtml(tag)}</span>`
         ).join('');
         
+        // Fotoğraf URL'ini escape et
+        const photoUrl = photo ? this.escapeHtml(photo) : null;
+        
         return `
             <div class="place-card" data-component="card">
-                ${photo ? `
-                    <div class="place-card-image" style="background-image: url('${photo}')">
+                ${photoUrl ? `
+                    <div class="place-card-image" style="background-image: url('${photoUrl}')">
                         <div class="place-card-overlay"></div>
                     </div>
                 ` : `

@@ -34,7 +34,9 @@ class PlaceSerializer(serializers.ModelSerializer):
             'price_range', 'menu_highlights', 'best_time_to_visit',
             'use_cases', 'popular_orders', 'vibe_tags', 'similar_places',
             'owner_description', 'local_guide_note', 'target_audience', 'one_line_summary',
-            'rating_breakdown', 'recent_comments', 'behavior_stats'
+            'rating_breakdown', 'recent_comments', 'behavior_stats',
+            # Konum bilgileri
+            'latitude', 'longitude'
         ]
     
     def get_average_rating(self, obj):

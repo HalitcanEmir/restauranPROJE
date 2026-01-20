@@ -145,16 +145,28 @@
                 <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
             </div>
             
-            <!-- Kart 5: Kısa Yorum -->
+            <!-- Kart 5: Kısa Yorum + Kendine Not -->
             <div class="review-card" data-step="5">
                 <h4>Bir cümle de senden?</h4>
                 <p class="text-muted small">İsteğe bağlı</p>
                 <textarea 
                     id="reviewComment" 
                     class="form-control" 
-                    rows="4" 
+                    rows="3" 
                     placeholder="Mesela: kahve çok iyiydi, servis yavaştı..."
                 ></textarea>
+                
+                <div style="margin-top: 16px;">
+                    <label for="reviewPrivateNote" class="text-muted small" style="display:block;margin-bottom:4px;">
+                        Kendine not bırak (sadece sen görebileceksin)
+                    </label>
+                    <textarea
+                        id="reviewPrivateNote"
+                        class="form-control"
+                        rows="2"
+                        placeholder="Örn: laptop için priz arkadaki masalarda, akşamları çok kalabalık oluyor..."
+                    ></textarea>
+                </div>
                 <button class="btn btn-primary mt-3" onclick="nextStep()">Devam</button>
                 <button class="btn btn-outline-secondary mt-2" onclick="nextStep()">Atla</button>
             </div>
@@ -454,6 +466,7 @@ let reviewData = {
     suitable_for: [],
     atmosphere: [],
     comment: '',
+    private_note: '',
     rating: null
 };
 let currentPlaceId = null;
@@ -469,6 +482,7 @@ function openReviewModal(placeId, updating = false) {
         suitable_for: [],
         atmosphere: [],
         comment: '',
+        private_note: '',
         rating: null
     };
     
@@ -582,6 +596,10 @@ function nextStep() {
         // Yorumu kaydet
         if (currentStep === 5) {
             reviewData.comment = document.getElementById('reviewComment').value;
+            const privateNoteField = document.getElementById('reviewPrivateNote');
+            if (privateNoteField) {
+                reviewData.private_note = privateNoteField.value || '';
+            }
         }
         
         currentStep++;
@@ -620,6 +638,10 @@ async function submitReview() {
     const commentField = document.getElementById('reviewComment');
     if (commentField) {
         reviewData.comment = commentField.value || '';
+    }
+    const privateNoteField = document.getElementById('reviewPrivateNote');
+    if (privateNoteField) {
+        reviewData.private_note = privateNoteField.value || '';
     }
     
     // Debug: reviewData'yı konsola yazdır

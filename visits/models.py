@@ -25,6 +25,11 @@ class Visit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='visits')
     place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='visits')
     visited_at = models.DateTimeField(auto_now_add=True)
+    # Kullanıcının sadece kendisinin göreceği özel not
+    private_note = models.TextField(
+        blank=True,
+        help_text="Bu mekana dair sadece senin görebileceğin kişisel notlar"
+    )
     
     # Yeni kart tabanlı alanlar
     sentiment = models.CharField(

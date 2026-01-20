@@ -143,6 +143,17 @@
                             {{ visit.comment|truncatewords:50 }}
                         </div>
                         {% endif %}
+                        
+                        {% if is_own_profile and visit.private_note %}
+                        <div class="visit-private-note">
+                            <div class="visit-private-note-label">
+                                <i class="bi bi-lock"></i> Kendime Not
+                            </div>
+                            <div class="visit-private-note-text">
+                                {{ visit.private_note|linebreaksbr }}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>

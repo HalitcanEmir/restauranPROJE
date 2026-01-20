@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.db.models import Q, Exists, OuterRef
 from django.utils import timezone
 from datetime import datetime
+import math
 from .models import Place, PlacePreference, UserBehavior
 from .serializers import PlaceSerializer
 
@@ -24,14 +25,21 @@ def discover_places(request):
     atmosphere = request.query_params.get('atmosphere', None)
     suitable_for = request.query_params.get('suitable_for', None)
     city = request.query_params.get('city', None)
+    mode = request.query_params.get('mode', None)  # Normal keşfet sayfası için
+    search = request.query_params.get('search', None)  # Normal keşfet sayfası için
+    show_all = request.query_params.get('show_all', 'false').lower() == 'true'  # Tüm mekanları göster
     
-    # Kullanıcının daha önce swipe yaptığı mekanları al
-    swiped_place_ids = PlacePreference.objects.filter(
-        user=user
-    ).values_list('place_id', flat=True)
-    
-    # Swipe yapılmamış mekanları getir
-    places = Place.objects.exclude(id__in=swiped_place_ids)
+    # Eğer show_all=True ise, swipe yapılmış mekanları da göster
+    if show_all:
+        places = Place.objects.all()
+    else:
+        # Kullanıcının daha önce swipe yaptığı mekanları al
+        swiped_place_ids = PlacePreference.objects.filter(
+            user=user
+        ).values_list('place_id', flat=True)
+        
+        # Swipe yapılmamış mekanları getir
+        places = Place.objects.exclude(id__in=swiped_place_ids)
     
     # SQLite uyumlu filtreler
     if price_level:
@@ -39,6 +47,13 @@ def discover_places(request):
     
     if city:
         places = places.filter(city__icontains=city)
+    
+    if search:
+        places = places.filter(
+            Q(name__icontains=search) |
+            Q(description__icontains=search) |
+            Q(address__icontains=search)
+        )
     
     # Fotoğrafı olan mekanları önceliklendir
     places = places.order_by('-created_at')
@@ -55,6 +70,9 @@ def discover_places(request):
     
     if suitable_for:
         places_list = [p for p in places_list if suitable_for in (p.categories or [])]
+    
+    if mode:
+        places_list = [p for p in places_list if mode in (p.categories or [])]
     
     # Serialize et
     serializer = PlaceSerializer(places_list[:20], many=True)  # İlk 20 mekan
@@ -194,4 +212,129 @@ def get_preferences(request):
         'success': True,
         'places': serializer.data,
         'count': len(serializer.data)
+    })
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    İki koordinat arasındaki mesafeyi km cinsinden hesaplar (Haversine formülü)
+    """
+    # Dünya yarıçapı (km)
+    R = 6371
+    
+    # Dereceyi radyana çevir
+    lat1_rad = math.radians(float(lat1))
+    lon1_rad = math.radians(float(lon1))
+    lat2_rad = math.radians(float(lat2))
+    lon2_rad = math.radians(float(lon2))
+    
+    # Farklar
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    
+    # Haversine formülü
+    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    distance = R * c
+    return distance
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def nearby_places(request):
+    """
+    Belirli bir koordinat etrafındaki yakın mekanları getirir
+    Query params:
+        - lat: Enlem (zorunlu)
+        - lon: Boylam (zorunlu)
+        - radius: Yarıçap (km, varsayılan: 5)
+        - limit: Maksimum sonuç sayısı (varsayılan: 20)
+    """
+    lat = request.query_params.get('lat')
+    lon = request.query_params.get('lon')
+    radius = float(request.query_params.get('radius', 5))  # Varsayılan 5 km
+    limit = int(request.query_params.get('limit', 20))
+    
+    if not lat or not lon:
+        return Response(
+            {'success': False, 'error': 'lat ve lon parametreleri gerekli'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except (ValueError, TypeError):
+        return Response(
+            {'success': False, 'error': 'lat ve lon sayısal değer olmalı'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Koordinatı olan mekanları al
+    places = Place.objects.filter(
+        latitude__isnull=False,
+        longitude__isnull=False
+    )
+    
+    # Mesafe hesapla ve filtrele
+    places_with_distance = []
+    for place in places:
+        distance = calculate_distance(lat, lon, place.latitude, place.longitude)
+        if distance <= radius:
+            places_with_distance.append({
+                'place': place,
+                'distance': round(distance, 2)
+            })
+    
+    # Mesafeye göre sırala
+    places_with_distance.sort(key=lambda x: x['distance'])
+    
+    # Limit uygula
+    places_with_distance = places_with_distance[:limit]
+    
+    # Serialize et
+    places_list = [item['place'] for item in places_with_distance]
+    serializer = PlaceSerializer(places_list, many=True)
+    
+    # Mesafe bilgisini ekle
+    result_data = []
+    for i, item in enumerate(places_with_distance):
+        place_data = serializer.data[i]
+        place_data['distance_km'] = item['distance']
+        result_data.append(place_data)
+    
+    return Response({
+        'success': True,
+        'places': result_data,
+        'count': len(result_data),
+        'center': {'lat': lat, 'lon': lon},
+        'radius': radius
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def place_location(request, place_id):
+    """
+    Belirli bir mekanın konum bilgilerini getirir
+    """
+    try:
+        place = Place.objects.get(id=place_id)
+    except Place.DoesNotExist:
+        return Response(
+            {'success': False, 'error': 'Mekan bulunamadı'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    return Response({
+        'success': True,
+        'place': {
+            'id': place.id,
+            'name': place.name,
+            'address': place.address,
+            'city': place.city,
+            'latitude': float(place.latitude) if place.latitude else None,
+            'longitude': float(place.longitude) if place.longitude else None,
+        }
     })

@@ -77,6 +77,7 @@ def AddReviewAPIView(request, place_id):
             suitable_for = data.get('suitable_for', [])
             atmosphere = data.get('atmosphere', [])
             comment = data.get('comment', '') or ''
+            private_note = data.get('private_note', '') or ''
             rating = data.get('rating', None)
             
             # Rating'i integer'a çevir (varsa)
@@ -105,6 +106,7 @@ def AddReviewAPIView(request, place_id):
                     suitable_for=suitable_for if isinstance(suitable_for, list) else [],
                     atmosphere=atmosphere if isinstance(atmosphere, list) else [],
                     comment=comment,
+                    private_note=private_note,
                     rating=rating,
                 )
             else:
@@ -116,8 +118,11 @@ def AddReviewAPIView(request, place_id):
                     visit.suitable_for = suitable_for if isinstance(suitable_for, list) else visit.suitable_for
                 if atmosphere:
                     visit.atmosphere = atmosphere if isinstance(atmosphere, list) else visit.atmosphere
-                if comment:
+                if comment is not None:
                     visit.comment = comment
+                # private_note her zaman güncellenebilir (boş da olsa)
+                if private_note is not None:
+                    visit.private_note = private_note
                 if rating:
                     visit.rating = rating
                 visit.save()

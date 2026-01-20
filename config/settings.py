@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config.context_processors.google_maps_api_key',
             ],
         },
     },
@@ -174,3 +175,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
 }
+
+# Google Maps API Key
+# Kendi API key'inizi almak için: https://console.cloud.google.com/google/maps-apis
+# Environment variable olarak ayarlayın: export GOOGLE_MAPS_API_KEY="your-api-key"
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyDummyKey')

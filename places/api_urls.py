@@ -11,6 +11,8 @@ urlpatterns = [
     path('discover/', discover_api_views.discover_places, name='discover'),
     path('discover/swipe/', discover_api_views.swipe_place, name='swipe'),
     path('discover/preferences/', discover_api_views.get_preferences, name='preferences'),
+    path('nearby/', discover_api_views.nearby_places, name='nearby_places'),
+    path('<int:place_id>/location/', discover_api_views.place_location, name='place_location'),
     # Recommendation endpoint
     path('recommendations/', recommendation_api_views.get_recommendations_api, name='recommendations'),
     # Advanced Features endpoints

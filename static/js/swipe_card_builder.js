@@ -507,14 +507,26 @@ class SwipeCardBuilder {
         locationCard.appendChild(icon);
         locationCard.appendChild(addressText);
         
-        // Haritada aç linki (eğer koordinat varsa)
+        // Haritada aç butonu (eğer koordinat varsa)
         if (latitude && longitude) {
-            const mapLink = document.createElement('a');
-            mapLink.className = 'location-map-link';
-            mapLink.href = `https://www.google.com/maps?q=${latitude},${longitude}`;
-            mapLink.target = '_blank';
-            mapLink.textContent = 'Haritada aç';
-            locationCard.appendChild(mapLink);
+            const mapButton = document.createElement('button');
+            mapButton.className = 'location-map-button';
+            mapButton.type = 'button';
+            mapButton.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Haritada Göster';
+            mapButton.onclick = () => {
+                // Global harita modal fonksiyonunu çağır
+                if (window.showMapModal) {
+                    window.showMapModal({
+                        placeId: place.id,
+                        name: place.name,
+                        address: place.address,
+                        city: place.city,
+                        latitude: parseFloat(latitude),
+                        longitude: parseFloat(longitude)
+                    });
+                }
+            };
+            locationCard.appendChild(mapButton);
         }
         
         section.appendChild(locationCard);
