@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from accounts.models import User
 from visits.models import Visit
-from .models import Friendship, UserScore
+from .models import Friendship, UserScore, GroupPlan
 
 
 @login_required
@@ -129,3 +129,36 @@ def leaderboard(request):
         'user_rank': user_rank,
     }
     return render(request, 'social/leaderboard.html', context)
+
+
+@login_required
+def group_plans(request):
+    """Grup planları listesi"""
+    return render(request, 'social/group_plans.html')
+
+
+@login_required
+def group_plan_detail(request, plan_id):
+    """Grup plan detay sayfası"""
+    plan = get_object_or_404(GroupPlan, id=plan_id)
+    
+    # Erişim kontrolü
+    is_creator = plan.creator == request.user
+    is_participant = plan.participants.filter(user=request.user).exists()
+    
+    if not (is_creator or is_participant):
+        messages.error(request, 'Bu plana erişim yetkiniz yok.')
+        return redirect('social:group_plans')
+    
+    context = {
+        'plan': plan,
+        'is_creator': is_creator,
+        'is_participant': is_participant,
+    }
+    return render(request, 'social/group_plan_detail.html', context)
+
+
+@login_required
+def create_group_plan(request):
+    """Yeni grup planı oluştur"""
+    return render(request, 'social/create_group_plan.html')

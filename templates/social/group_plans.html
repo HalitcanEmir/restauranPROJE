@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grup Planlarım - MekanKeşif{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/group_planning.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="group-plans-page">
+    <div class="page-header">
+        <h1><i class="bi bi-calendar-event"></i> Grup Planlarım</h1>
+        <a href="{% url 'social:create_group_plan' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Yeni Plan Oluştur
+        </a>
+    </div>
+
+    <div class="plans-container" id="plansContainer">
+        <div class="loading-state">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Planlar yükleniyor...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/group_planning.js' %}?v=1.0"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const manager = new GroupPlansManager();
+    manager.loadPlans();
+});
+</script>
+{% endblock %}

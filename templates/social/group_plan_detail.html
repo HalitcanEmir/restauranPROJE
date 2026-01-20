@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ plan.title }} - MekanKeşif{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/group_planning.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="plan-detail-page">
+    <div class="page-header">
+        <div>
+            <h1>{{ plan.title }}</h1>
+            <p class="plan-meta">
+                <i class="bi bi-person"></i> Oluşturan: {{ plan.creator.username }} |
+                <i class="bi bi-calendar"></i> {{ plan.created_at|date:"d M Y" }}
+            </p>
+        </div>
+        <div class="plan-status-badge status-{{ plan.status }}">
+            {{ plan.get_status_display }}
+        </div>
+    </div>
+
+    {% if plan.description %}
+    <div class="plan-description">
+        <p>{{ plan.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="plan-detail-layout">
+        <main class="plan-main">
+            <!-- Oylama Bölümü -->
+            <section class="plan-section" id="votingSection">
+                <h2><i class="bi bi-bar-chart"></i> Oylama</h2>
+                <div id="placeOptions" class="place-options">
+                    <!-- Mekan seçenekleri buraya yüklenecek -->
+                </div>
+                <button onclick="suggestPlace()" class="btn btn-secondary">
+                    <i class="bi bi-plus-circle"></i> Mekan Öner
+                </button>
+            </section>
+
+            <!-- Oylar -->
+            <section class="plan-section" id="votesSection">
+                <h2><i class="bi bi-check-circle"></i> Verilen Oyolar</h2>
+                <div id="votesList" class="votes-list">
+                    <!-- Oyolar buraya yüklenecek -->
+                </div>
+            </section>
+        </main>
+
+        <aside class="plan-sidebar">
+            <!-- Katılımcılar -->
+            <div class="plan-section">
+                <h3><i class="bi bi-people"></i> Katılımcılar</h3>
+                <div id="participantsList" class="participants-list">
+                    <!-- Katılımcılar buraya yüklenecek -->
+                </div>
+            </div>
+
+            <!-- Plan Bilgileri -->
+            <div class="plan-section">
+                <h3><i class="bi bi-info-circle"></i> Plan Bilgileri</h3>
+                <div class="plan-info">
+                    {% if plan.planned_date %}
+                    <div class="info-item">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>{{ plan.planned_date|date:"d M Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if plan.deadline %}
+                    <div class="info-item">
+                        <i class="bi bi-clock"></i>
+                        <span>Oylama: {{ plan.deadline|date:"d M Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Seçilen Mekan -->
+            {% if plan.selected_place %}
+            <div class="plan-section">
+                <h3><i class="bi bi-check-circle-fill"></i> Seçilen Mekan</h3>
+                <div class="selected-place">
+                    <h4>{{ plan.selected_place.name }}</h4>
+                    <p>{{ plan.selected_place.address }}</p>
+                    <a href="{% url 'places:place_detail' plan.selected_place.id %}" class="btn btn-sm btn-primary">
+                        Detayları Gör
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Aksiyonlar -->
+            {% if is_creator %}
+            <div class="plan-actions">
+                {% if plan.status == 'voting' %}
+                <button onclick="finalizePlan({{ plan.id }})" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Planı Kesinleştir
+                </button>
+                {% endif %}
+                <button onclick="exportToCalendar({{ plan.id }})" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar"></i> Takvime Ekle
+                </button>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+
+<!-- Mekan Öner Modal -->
+<div id="suggestPlaceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Mekan Öner</h3>
+            <button class="modal-close" onclick="closeSuggestModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Mekan Ara</label>
+                <input type="text" id="placeSearch" class="form-control" placeholder="Mekan adı yazın...">
+                <div id="placeSearchResults" class="search-results"></div>
+            </div>
+            <div class="form-group">
+                <label>Öneri Notu</label>
+                <textarea id="suggestionNote" class="form-control" rows="3" 
+                          placeholder="Neden bu mekanı öneriyorsunuz?"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="submitPlaceSuggestion()" class="btn btn-primary">Öner</button>
+            <button onclick="closeSuggestModal()" class="btn btn-secondary">İptal</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PLAN_ID = {{ plan.id }};
+const IS_CREATOR = {{ is_creator|yesno:"true,false" }};
+</script>
+<script src="{% static 'js/group_planning.js' %}?v=1.0"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const detail = new GroupPlanDetail(PLAN_ID, IS_CREATOR);
+    detail.init();
+});
+</script>
+{% endblock %}

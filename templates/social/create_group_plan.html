@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Yeni Plan Oluştur - MekanKeşif{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/group_planning.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="create-plan-page">
+    <div class="page-header">
+        <h1><i class="bi bi-calendar-plus"></i> Yeni Plan Oluştur</h1>
+        <a href="{% url 'social:group_plans' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Geri
+        </a>
+    </div>
+
+    <div class="create-plan-form">
+        <form id="createPlanForm">
+            <div class="form-group">
+                <label for="planTitle">Plan Başlığı *</label>
+                <input type="text" id="planTitle" name="title" class="form-control" 
+                       placeholder="Örn: Cumartesi Brunch" required>
+            </div>
+
+            <div class="form-group">
+                <label for="planDescription">Açıklama</label>
+                <textarea id="planDescription" name="description" class="form-control" 
+                          rows="3" placeholder="Plan hakkında notlar..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="plannedDate">Planlanan Tarih</label>
+                    <input type="datetime-local" id="plannedDate" name="planned_date" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">Oylama Bitiş Tarihi</label>
+                    <input type="datetime-local" id="deadline" name="deadline" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Arkadaşları Davet Et</label>
+                <div id="friendsList" class="friends-list">
+                    <div class="loading-state">
+                        <i class="bi bi-hourglass-split"></i>
+                        <p>Arkadaşlar yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Planı Oluştur
+                </button>
+                <a href="{% url 'social:group_plans' %}" class="btn btn-secondary">İptal</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/group_planning.js' %}?v=1.0"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const creator = new GroupPlanCreator();
+    creator.init();
+});
+</script>
+{% endblock %}

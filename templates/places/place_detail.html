@@ -15,6 +15,11 @@
         <div class="place-detail-location">
             <i class="bi bi-geo-alt-fill"></i>
             <span>{{ place.address }}, {{ place.city }}</span>
+            {% if place.latitude and place.longitude %}
+            <button onclick="showPlaceOnMap()" class="btn-show-map" title="Haritada Göster">
+                <i class="bi bi-geo-alt"></i> Haritada Göster
+            </button>
+            {% endif %}
         </div>
         <div class="place-detail-meta">
             <div class="place-meta-item">
@@ -162,6 +167,17 @@
                 </div>
             </div>
             {% endif %}
+            
+            {% if place.latitude and place.longitude %}
+            <div class="place-section">
+                <h3 class="section-title" style="font-size: var(--text-lg);">
+                    <i class="bi bi-geo-alt"></i> Konum
+                </h3>
+                <button onclick="showPlaceOnMap()" class="btn-show-map-full" style="width: 100%; margin-top: var(--spacing-md);">
+                    <i class="bi bi-geo-alt-fill"></i> Haritada Göster
+                </button>
+            </div>
+            {% endif %}
         </aside>
     </div>
 </div>
@@ -181,10 +197,69 @@
         </div>
     </div>
 </div>
+
+<!-- Harita Modal -->
+{% if place.latitude and place.longitude %}
+<div id="mapModal" class="map-modal">
+    <div class="map-modal-content">
+        <div class="map-modal-header">
+            <h3 id="mapModalTitle">Haritada Göster</h3>
+            <button class="map-modal-close" onclick="closeMapModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="map-modal-body">
+            <div id="mapContainer" class="map-container"></div>
+            <div class="map-info">
+                <div id="mapPlaceInfo" class="map-place-info"></div>
+                <div class="map-actions">
+                    <button id="btnGetRoute" class="btn-get-route" onclick="getRoute()">
+                        <i class="bi bi-signpost"></i> Rota Al
+                    </button>
+                    <button id="btnShowNearby" class="btn-show-nearby" onclick="showNearbyPlaces()">
+                        <i class="bi bi-geo-alt"></i> Yakındakileri Göster
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/place-detail.js' %}"></script>
 {% include 'places/review_modal.html' %}
+{% if place.latitude and place.longitude %}
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:"AIzaSyDummyKey" }}&libraries=places,directions" async defer></script>
+<script src="{% static 'js/map_integration.js' %}?v=1.0"></script>
+<script>
+// Place detay sayfası için harita fonksiyonu
+function showPlaceOnMap() {
+    const place = {
+        id: {{ place.id }},
+        name: "{{ place.name|escapejs }}",
+        address: "{{ place.address|escapejs }}",
+        city: "{{ place.city|escapejs }}",
+        latitude: {{ place.latitude }},
+        longitude: {{ place.longitude }}
+    };
+    
+    if (window.showMapModal) {
+        window.showMapModal(place);
+    } else {
+        // Eğer map_integration.js henüz yüklenmediyse bekle
+        setTimeout(() => {
+            if (window.showMapModal) {
+                window.showMapModal(place);
+            } else {
+                alert('Harita yükleniyor, lütfen tekrar deneyin.');
+            }
+        }, 1000);
+    }
+}
+</script>
+{% endif %}
 {% endblock %}
 
