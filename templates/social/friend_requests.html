@@ -1,8 +1,17 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Arkadaşlık İstekleri - MekanKeşif{% endblock %}
 
 {% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-inbox"></i> Arkadaşlık İstekleri</h2>
+        <a href="{% url 'social:friends_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Arkadaşlarım
+        </a>
+    </div>
+    
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -44,7 +53,10 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">Gelen istek yok.</p>
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-2">Gelen istek yok.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -82,7 +94,10 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">Gönderilen istek yok.</p>
+                    <div class="text-center py-4">
+                        <i class="bi bi-send" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-2">Gönderilen istek yok.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
