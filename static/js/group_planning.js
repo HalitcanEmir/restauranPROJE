@@ -6,7 +6,8 @@
 // Plan Listesi Yöneticisi
 class GroupPlansManager {
     constructor() {
-        this.container = document.getElementById('plansContainer');
+        this.listContainer = document.getElementById('plansList');
+        this.emptyState = document.getElementById('plansEmptyState');
     }
 
     async loadPlans() {
@@ -23,50 +24,49 @@ class GroupPlansManager {
             this.renderPlans(data.plans || []);
         } catch (error) {
             console.error('Error loading plans:', error);
-            this.container.innerHTML = `
+            if (this.listContainer) {
+                this.listContainer.innerHTML = `
                 <div class="error-state">
                     <i class="bi bi-exclamation-triangle"></i>
                     <p>Planlar yüklenirken bir hata oluştu.</p>
                 </div>
             `;
+            }
         }
     }
 
     renderPlans(plans) {
+        if (!this.listContainer) return;
+
         if (plans.length === 0) {
-            this.container.innerHTML = `
-                <div class="empty-state">
-                    <i class="bi bi-calendar-x"></i>
-                    <p>Henüz plan oluşturmadınız.</p>
-                    <a href="/social/plans/create/" class="btn btn-primary">İlk Planınızı Oluşturun</a>
+            this.listContainer.innerHTML = `
+                <div class="empty-state" style="padding: 1.5rem; text-align: center;">
+                    <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-1">Henüz hiç grubun yok.</p>
+                    <a href="/social/plans/create/" class="btn btn-sm btn-primary">İlk Grubunu Oluştur</a>
                 </div>
             `;
+            if (this.emptyState) {
+                this.emptyState.querySelector('p').textContent = 'Sağda detay görmek için önce bir grup oluşturmalısın.';
+            }
             return;
         }
 
-        this.container.innerHTML = plans.map(plan => `
-            <div class="plan-card" onclick="window.location.href='/social/plans/${plan.id}/'">
-                <div class="plan-card-header">
-                    <h3 class="plan-card-title">${this.escapeHtml(plan.title)}</h3>
-                    <span class="plan-status-badge status-${plan.status}">
-                        ${this.getStatusText(plan.status)}
-                    </span>
+        this.listContainer.innerHTML = plans.map(plan => `
+            <div class="plans-list-item" onclick="window.location.href='/social/plans/${plan.id}/'">
+                <div class="plans-list-item-title">
+                    ${this.escapeHtml(plan.title)}
                 </div>
-                <div class="plan-card-meta">
-                    <i class="bi bi-person"></i> ${plan.creator_username} |
-                    <i class="bi bi-people"></i> ${plan.total_participants} katılımcı |
-                    <i class="bi bi-bar-chart"></i> ${plan.total_votes} oy
-                </div>
-                ${plan.description ? `<p>${this.escapeHtml(plan.description)}</p>` : ''}
-                <div class="plan-card-footer">
-                    <span class="text-muted">${this.formatDate(plan.created_at)}</span>
-                    ${plan.selected_place_name ? 
-                        `<span class="badge bg-success">${plan.selected_place_name}</span>` : 
-                        '<span class="badge bg-secondary">Oylama devam ediyor</span>'
-                    }
+                <div class="plans-list-item-meta">
+                    <span>${this.escapeHtml(this.getStatusText(plan.status))}</span>
+                    <span>${this.formatDate(plan.created_at)}</span>
                 </div>
             </div>
         `).join('');
+
+        if (this.emptyState) {
+            this.emptyState.querySelector('p').textContent = 'Bir grup seçtiğinde detayları burada göreceksin.';
+        }
     }
 
     getStatusText(status) {
@@ -96,7 +96,12 @@ class GroupPlanCreator {
     constructor() {
         this.form = document.getElementById('createPlanForm');
         this.friendsList = document.getElementById('friendsList');
+        this.selectedFriendsList = document.getElementById('selectedFriendsList');
+        this.selectedFriendsSection = document.getElementById('selectedFriendsSection');
+        this.selectedCount = document.getElementById('selectedCount');
         this.selectedFriends = new Set();
+        this.allFriends = [];
+        this.filteredFriends = [];
     }
 
     async init() {
@@ -115,7 +120,9 @@ class GroupPlanCreator {
             }
 
             const data = await response.json();
-            this.renderFriends(data.friends || []);
+            this.allFriends = data.friends || [];
+            this.filteredFriends = [...this.allFriends];
+            this.renderFriends(this.filteredFriends);
         } catch (error) {
             console.error('Error loading friends:', error);
             this.friendsList.innerHTML = `
@@ -127,25 +134,94 @@ class GroupPlanCreator {
         }
     }
 
+    filterFriends(query) {
+        const searchTerm = query.toLowerCase().trim();
+        if (searchTerm === '') {
+            this.filteredFriends = [...this.allFriends];
+        } else {
+            this.filteredFriends = this.allFriends.filter(friend => {
+                const username = (friend.username || '').toLowerCase();
+                const displayName = (friend.display_name || '').toLowerCase();
+                return username.includes(searchTerm) || displayName.includes(searchTerm);
+            });
+        }
+        this.renderFriends(this.filteredFriends);
+    }
+
     renderFriends(friends) {
         if (friends.length === 0) {
             this.friendsList.innerHTML = `
                 <div class="empty-state">
-                    <p>Henüz arkadaşınız yok. Arkadaş ekleyerek başlayın!</p>
+                    <p>Arkadaş bulunamadı.</p>
                 </div>
             `;
             return;
         }
 
-        this.friendsList.innerHTML = friends.map(friend => `
-            <div class="friend-item">
-                <label>
-                    <input type="checkbox" value="${friend.id}" 
-                           onchange="groupPlanCreator.toggleFriend(${friend.id})">
-                    <span>${this.escapeHtml(friend.display_name || friend.username)}</span>
-                </label>
-            </div>
-        `).join('');
+        this.friendsList.innerHTML = friends.map(friend => {
+            const isSelected = this.selectedFriends.has(friend.id);
+            const displayName = friend.display_name || friend.username;
+            const escapedDisplayName = this.escapeHtml(displayName);
+            const escapedUsername = this.escapeHtml(friend.username);
+            
+            return `
+                <div class="friend-item ${isSelected ? 'selected' : ''}" 
+                     data-user-id="${friend.id}">
+                    <div class="friend-info">
+                        <strong>${escapedDisplayName}</strong>
+                        <span class="friend-username">@${escapedUsername}</span>
+                    </div>
+                    ${isSelected ? 
+                        '<span class="added-badge"><i class="bi bi-check-circle"></i> Eklendi</span>' : 
+                        `<button class="add-friend-btn" 
+                                onclick="groupPlanCreator.addFriend(${friend.id}, '${escapedDisplayName.replace(/'/g, "\\'")}', '${escapedUsername.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-plus-circle"></i> Ekle
+                        </button>`
+                    }
+                </div>
+            `;
+        }).join('');
+    }
+
+    addFriend(userId, displayName, username) {
+        if (this.selectedFriends.has(userId)) {
+            return;
+        }
+        
+        this.selectedFriends.add(userId);
+        this.updateSelectedFriendsList();
+        this.renderFriends(this.filteredFriends);
+    }
+
+    removeFriend(userId) {
+        this.selectedFriends.delete(userId);
+        this.updateSelectedFriendsList();
+        this.renderFriends(this.filteredFriends);
+    }
+
+    updateSelectedFriendsList() {
+        const count = this.selectedFriends.size;
+        this.selectedCount.textContent = count;
+        
+        if (count === 0) {
+            this.selectedFriendsSection.style.display = 'none';
+            return;
+        }
+        
+        this.selectedFriendsSection.style.display = 'block';
+        
+        const selectedFriendsData = this.allFriends.filter(f => this.selectedFriends.has(f.id));
+        this.selectedFriendsList.innerHTML = selectedFriendsData.map(friend => {
+            const displayName = friend.display_name || friend.username;
+            return `
+                <div class="selected-friend-item">
+                    <span>${this.escapeHtml(displayName)}</span>
+                    <button class="remove-friend-btn" onclick="groupPlanCreator.removeFriend(${friend.id})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
     }
 
     toggleFriend(userId) {
@@ -164,12 +240,20 @@ class GroupPlanCreator {
     }
 
     async createPlan() {
-        const formData = new FormData(this.form);
+        if (this.selectedFriends.size === 0) {
+            alert('Lütfen gruba en az bir arkadaş ekleyin.');
+            return;
+        }
+
+        const now = new Date();
+        const defaultTitle = `Grup - ${now.toLocaleDateString('tr-TR')}`;
+
         const data = {
-            title: formData.get('title'),
-            description: formData.get('description') || '',
-            planned_date: formData.get('planned_date') || null,
-            deadline: formData.get('deadline') || null
+            title: defaultTitle,
+            description: '',
+            planned_date: null,
+            deadline: null,
+            poll_questions: []
         };
 
         try {
@@ -268,6 +352,7 @@ class GroupPlanDetail {
         this.renderPlaceOptions(plan.place_options || []);
         this.renderVotes(plan.votes || []);
         this.renderParticipants(plan.participants || []);
+        this.renderPoll(plan.poll_questions || [], plan.participants || []);
     }
 
     renderPlaceOptions(options) {
@@ -332,6 +417,116 @@ class GroupPlanDetail {
                 }
             </div>
         `).join('');
+    }
+
+    renderPoll(questions, participants) {
+        const section = document.getElementById('pollSection');
+        const container = document.getElementById('pollQuestions');
+        const resultsContainer = document.getElementById('pollResults');
+
+        if (!section || !container || !resultsContainer) return;
+
+        if (!questions || questions.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+
+        // Cevap formu
+        container.innerHTML = questions.map((q, index) => `
+            <div class="form-group">
+                <label>${this.escapeHtml(q)}</label>
+                <input type="text" class="form-control poll-answer-input" data-question-index="${index}" placeholder="Cevabın">
+            </div>
+        `).join('');
+
+        // Mevcut katılımcı cevaplarından özet çıkar
+        const summary = {};
+        questions.forEach((q, idx) => {
+            summary[idx] = {};
+        });
+
+        participants.forEach(p => {
+            if (!p.poll_answers) return;
+            Object.entries(p.poll_answers).forEach(([key, value]) => {
+                if (!summary[key]) summary[key] = {};
+                const v = value || '';
+                if (!summary[key][v]) summary[key][v] = 0;
+                summary[key][v] += 1;
+            });
+        });
+
+        resultsContainer.innerHTML = questions.map((q, idx) => {
+            const answers = summary[idx] || {};
+            const items = Object.entries(answers);
+            if (items.length === 0) {
+                return `
+                    <div class="poll-result-item">
+                        <strong>${this.escapeHtml(q)}</strong>
+                        <p class="text-muted">Henüz cevap yok.</p>
+                    </div>
+                `;
+            }
+
+            const answersHtml = items.map(([answer, count]) => `
+                <div class="poll-answer-row">
+                    <span>${this.escapeHtml(answer)}</span>
+                    <span class="badge bg-primary">${count}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="poll-result-item">
+                    <strong>${this.escapeHtml(q)}</strong>
+                    <div class="poll-answer-list">
+                        ${answersHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Kaydet butonu bağla
+        const saveButton = document.getElementById('savePollAnswersBtn');
+        if (saveButton) {
+            saveButton.onclick = () => this.savePollAnswers(questions.length);
+        }
+    }
+
+    async savePollAnswers(questionCount) {
+        const inputs = document.querySelectorAll('.poll-answer-input');
+        const answers = {};
+
+        inputs.forEach(input => {
+            const idx = input.dataset.questionIndex;
+            const value = (input.value || '').trim();
+            if (value) {
+                answers[idx] = value;
+            }
+        });
+
+        try {
+            const response = await fetch(`/api/social/plans/${this.planId}/poll/answers/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ answers })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Cevaplar kaydedilemedi');
+            }
+
+            alert('Cevapların kaydedildi!');
+            await this.loadPlan();
+        } catch (error) {
+            console.error('Error saving poll answers:', error);
+            alert('Cevaplar kaydedilirken bir hata oluştu: ' + error.message);
+        }
     }
 
     async vote(placeId, voteType) {

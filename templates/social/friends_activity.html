@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Arkadaşlar - MekanKeşif{% endblock %}
+{% block title %}Arkadaş Aktivitesi - MekanKeşif{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="bi bi-people"></i> Arkadaşlar</h2>
+            <h2 class="mb-0">
+                <i class="bi bi-activity"></i> Arkadaşların Gittiği Yerler
+            </h2>
             <div class="d-flex gap-2">
-                <a href="{% url 'social:create_group_plan' %}" class="btn btn-success">
-                    <i class="bi bi-people-fill"></i> Grup Oluştur
+                <a href="{% url 'social:friends_feed' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Arkadaş Alanına Dön
                 </a>
                 <button onclick="showAddFriendModal()" class="btn btn-primary">
                     <i class="bi bi-person-plus"></i> Arkadaş Ekle
                 </button>
-                <a href="{% url 'social:friend_requests' %}" class="btn btn-outline-primary">
-                    <i class="bi bi-inbox"></i> İstekler
-                </a>
             </div>
         </div>
         
@@ -39,31 +39,63 @@
             </div>
         </div>
         
-        {% if friends %}
-        <div class="row">
-            {% for friend_data in friends %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5>
-                            <a href="{% url 'accounts:profile' username=friend_data.user.username %}" class="text-decoration-none">
-                                {{ friend_data.user.profile.get_display_name }}
+        {% if visits %}
+            {% for visit in visits %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <strong>
+                                <a href="{% url 'accounts:profile' username=visit.user.username %}" class="text-decoration-none">
+                                    {{ visit.user.username }}
+                                </a>
+                            </strong>
+                            <span class="text-muted">dün</span>
+                            <a href="{% url 'places:place_detail' visit.place.id %}" class="text-decoration-none">
+                                {{ visit.place.name }}
                             </a>
-                        </h5>
-                        <p class="text-muted">@{{ friend_data.user.username }}</p>
-                        {% if friend_data.user.profile.city %}
-                            <p><i class="bi bi-geo-alt"></i> {{ friend_data.user.profile.city }}</p>
-                        {% endif %}
+                            <span class="text-muted">'e gitti ve</span>
+                            <span class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= visit.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <strong>{{ visit.rating }}/5</strong> puan verdi
+                        </div>
+                        <small class="text-muted">{{ visit.visited_at|date:"d M Y H:i" }}</small>
+                    </div>
+                    
+                    {% if visit.comment %}
+                    <p class="mb-2">{{ visit.comment }}</p>
+                    {% endif %}
+                    
+                    <div>
+                        <span class="badge bg-secondary">{{ visit.get_with_whom_display }}</span>
+                        {% for tag in visit.mood_tags %}
+                            <span class="badge bg-info">{{ tag }}</span>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
             {% endfor %}
-        </div>
         {% else %}
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> Henüz arkadaşınız yok. 
-            <a href="{% url 'social:friend_requests' %}">Arkadaş ekleyin</a>!
-        </div>
+            <div class="alert alert-info text-center py-4">
+                <i class="bi bi-info-circle" style="font-size: 3rem; color: #0dcaf0;"></i>
+                <p class="mt-3 mb-2">Henüz arkadaş aktivitesi yok.</p>
+                <p class="mb-0">
+                    <button onclick="showAddFriendModal()" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus"></i> Arkadaş Ekle
+                    </button>
+                    veya 
+                    <a href="{% url 'places:discover' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-compass"></i> Mekan Keşfet
+                    </a>
+                </p>
+            </div>
         {% endif %}
     </div>
 </div>
@@ -164,7 +196,6 @@ async function sendFriendRequest(username) {
         
         alert('Arkadaşlık isteği gönderildi!');
         closeAddFriendModal();
-        // Sayfayı yenile
         setTimeout(() => location.reload(), 1000);
     } catch (error) {
         console.error('Error sending friend request:', error);
@@ -240,3 +271,4 @@ document.addEventListener('click', function(e) {
 }
 </style>
 {% endblock %}
+

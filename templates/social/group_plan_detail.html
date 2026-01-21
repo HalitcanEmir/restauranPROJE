@@ -30,6 +30,25 @@
 
     <div class="plan-detail-layout">
         <main class="plan-main">
+            <!-- Hızlı Anket Bölümü -->
+            <section class="plan-section" id="pollSection" style="display: none;">
+                <h2><i class="bi bi-chat-square-dots"></i> Grup Anketi</h2>
+                <p class="text-muted">
+                    Planla ilgili kısa sorulara cevap vererek herkesin aynı sayfada olmasını sağlayın.
+                </p>
+                <div id="pollQuestions" class="poll-questions">
+                    <!-- Sorular ve cevap inputları JS ile yüklenecek -->
+                </div>
+                <button id="savePollAnswersBtn" class="btn btn-primary mt-2">
+                    <i class="bi bi-send"></i> Cevapları Kaydet
+                </button>
+                <hr>
+                <h3 class="mt-3"><i class="bi bi-graph-up"></i> Cevap Özeti</h3>
+                <div id="pollResults" class="poll-results">
+                    <!-- Özet sonuçlar JS ile yüklenecek -->
+                </div>
+            </section>
+
             <!-- Oylama Bölümü -->
             <section class="plan-section" id="votingSection">
                 <h2><i class="bi bi-bar-chart"></i> Oylama</h2>

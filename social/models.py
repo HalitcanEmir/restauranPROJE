@@ -87,6 +87,13 @@ class GroupPlan(models.Model):
     calendar_event_id = models.CharField(max_length=200, blank=True, help_text="Google Calendar event ID")
     ical_uid = models.CharField(max_length=200, blank=True, help_text="iCal UID")
     
+    # Grup içi hızlı anket soruları (en fazla 3 soru önerilir)
+    poll_questions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Grup içi oylama soruları listesi (örn: ['Bugün akşam geliyor musun?', 'Kaça kadar kalabilirsin?'])"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -141,6 +148,13 @@ class PlanParticipant(models.Model):
     is_invited = models.BooleanField(default=True)
     has_accepted = models.BooleanField(default=False)
     has_declined = models.BooleanField(default=False)
+    
+    # Hızlı anket cevapları (soru index -> cevap)
+    poll_answers = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Grup planı içindeki sorulara verilen cevaplar, {'0': 'Evet', '1': '23:00'} gibi"
+    )
     
     # Bildirim tercihleri
     notify_on_vote = models.BooleanField(default=True)

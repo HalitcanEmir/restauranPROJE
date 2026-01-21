@@ -16,6 +16,7 @@ urlpatterns = [
     path('plans/<int:plan_id>/suggest-place/', group_planning_api.suggest_place_api, name='suggest_place'),
     path('plans/<int:plan_id>/vote/', group_planning_api.vote_place_api, name='vote_place'),
     path('plans/<int:plan_id>/finalize/', group_planning_api.finalize_plan_api, name='finalize_plan'),
+    path('plans/<int:plan_id>/poll/answers/', group_planning_api.save_poll_answers_api, name='save_poll_answers'),
     path('plans/<int:plan_id>/export-ical/', group_planning_api.export_plan_ical, name='export_plan_ical'),
     path('friends/for-invite/', group_planning_api.get_friends_for_invite_api, name='friends_for_invite'),
 ]

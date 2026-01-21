@@ -45,7 +45,7 @@ class PlanParticipantSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanParticipant
         fields = ['id', 'user_id', 'username', 'is_invited', 'has_accepted', 
-                  'has_declined', 'invited_at', 'responded_at']
+                  'has_declined', 'invited_at', 'responded_at', 'poll_answers']
 
 
 class PlanVoteSerializer(serializers.ModelSerializer):
@@ -88,7 +88,7 @@ class GroupPlanSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'creator', 'creator_username', 'title', 'description',
             'planned_date', 'deadline', 'status', 'selected_place', 'selected_place_data',
-            'calendar_event_id', 'ical_uid', 'created_at', 'updated_at',
+            'calendar_event_id', 'ical_uid', 'poll_questions', 'created_at', 'updated_at',
             'participants', 'votes', 'place_options', 'total_participants',
             'total_votes', 'is_voting_active'
         ]

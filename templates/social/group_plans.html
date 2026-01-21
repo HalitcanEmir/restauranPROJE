@@ -10,17 +10,39 @@
 {% block content %}
 <div class="group-plans-page">
     <div class="page-header">
-        <h1><i class="bi bi-calendar-event"></i> Grup Planlarım</h1>
+        <h1><i class="bi bi-people"></i> Gruplarım</h1>
         <a href="{% url 'social:create_group_plan' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Yeni Plan Oluştur
+            <i class="bi bi-plus-circle"></i> Yeni Grup Oluştur
         </a>
     </div>
 
-    <div class="plans-container" id="plansContainer">
-        <div class="loading-state">
-            <i class="bi bi-hourglass-split"></i>
-            <p>Planlar yükleniyor...</p>
-        </div>
+    <div class="group-plans-layout">
+        <!-- Sol: DM tarzı grup listesi -->
+        <aside class="plans-sidebar">
+            <div class="plans-sidebar-header">
+                <h2>Gruplar</h2>
+                <a href="{% url 'social:create_group_plan' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus"></i> Yeni Grup
+                </a>
+            </div>
+            <div id="plansList" class="plans-list">
+                <div class="loading-state">
+                    <i class="bi bi-hourglass-split"></i>
+                    <p>Gruplar yükleniyor...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sağ: Seçili grup / bilgilendirme -->
+        <main class="plans-main">
+            <div id="plansEmptyState" class="plans-empty-state">
+                <h2><i class="bi bi-chat-dots"></i> Grup Alanı</h2>
+                <p>Soldan bir grup seçebilir veya yeni bir grup oluşturabilirsin.</p>
+                <a href="{% url 'social:create_group_plan' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> İlk Grubunu Oluştur
+                </a>
+            </div>
+        </main>
     </div>
 </div>
 {% endblock %}

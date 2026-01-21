@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Yeni Plan Oluştur - MekanKeşif{% endblock %}
+{% block title %}Yeni Grup Oluştur - MekanKeşif{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/group_planning.css' %}">
@@ -10,7 +10,7 @@
 {% block content %}
 <div class="create-plan-page">
     <div class="page-header">
-        <h1><i class="bi bi-calendar-plus"></i> Yeni Plan Oluştur</h1>
+        <h1><i class="bi bi-people"></i> Yeni Grup Oluştur</h1>
         <a href="{% url 'social:group_plans' %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Geri
         </a>
@@ -19,31 +19,23 @@
     <div class="create-plan-form">
         <form id="createPlanForm">
             <div class="form-group">
-                <label for="planTitle">Plan Başlığı *</label>
-                <input type="text" id="planTitle" name="title" class="form-control" 
-                       placeholder="Örn: Cumartesi Brunch" required>
-            </div>
-
-            <div class="form-group">
-                <label for="planDescription">Açıklama</label>
-                <textarea id="planDescription" name="description" class="form-control" 
-                          rows="3" placeholder="Plan hakkında notlar..."></textarea>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="plannedDate">Planlanan Tarih</label>
-                    <input type="datetime-local" id="plannedDate" name="planned_date" class="form-control">
+                <label>Gruba Arkadaş Ekle</label>
+                
+                <!-- Arama Çubuğu -->
+                <div class="friend-search-container">
+                    <input type="text" id="friendSearch" class="form-control" 
+                           placeholder="Arkadaş adı ara..." 
+                           onkeyup="groupPlanCreator.filterFriends(this.value)">
+                    <i class="bi bi-search search-icon"></i>
                 </div>
-
-                <div class="form-group">
-                    <label for="deadline">Oylama Bitiş Tarihi</label>
-                    <input type="datetime-local" id="deadline" name="deadline" class="form-control">
+                
+                <!-- Seçilen Arkadaşlar -->
+                <div id="selectedFriendsSection" class="selected-friends-section" style="display: none;">
+                    <h4>Seçilen Arkadaşlar (<span id="selectedCount">0</span>)</h4>
+                    <div id="selectedFriendsList" class="selected-friends-list"></div>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label>Arkadaşları Davet Et</label>
+                
+                <!-- Arkadaş Listesi -->
                 <div id="friendsList" class="friends-list">
                     <div class="loading-state">
                         <i class="bi bi-hourglass-split"></i>
@@ -54,7 +46,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> Planı Oluştur
+                    <i class="bi bi-check-circle"></i> Grubu Oluştur
                 </button>
                 <a href="{% url 'social:group_plans' %}" class="btn btn-secondary">İptal</a>
             </div>

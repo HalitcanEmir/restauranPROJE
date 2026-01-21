@@ -51,6 +51,7 @@ def group_plans_api(request):
         description = request.data.get('description', '')
         planned_date = request.data.get('planned_date', None)
         deadline = request.data.get('deadline', None)
+        poll_questions = request.data.get('poll_questions', [])
         
         if not title:
             return Response(
@@ -72,13 +73,21 @@ def group_plans_api(request):
             except:
                 planned_date = None
         
+        # Maksimum 3 soru, boşları temizle
+        if isinstance(poll_questions, list):
+            clean_questions = [q.strip() for q in poll_questions if isinstance(q, str) and q.strip()]
+            poll_questions = clean_questions[:3]
+        else:
+            poll_questions = []
+        
         plan = GroupPlan.objects.create(
             creator=request.user,
             title=title,
             description=description,
             planned_date=planned_date,
             deadline=deadline,
-            status='draft'
+            status='draft',
+            poll_questions=poll_questions
         )
         
         # Oluşturucuyu otomatik katılımcı olarak ekle
@@ -142,6 +151,7 @@ def group_plan_detail_api(request, plan_id):
         planned_date = request.data.get('planned_date', None)
         deadline = request.data.get('deadline', None)
         status_value = request.data.get('status', plan.status)
+        poll_questions = request.data.get('poll_questions', None)
         
         plan.title = title
         plan.description = description
@@ -158,6 +168,11 @@ def group_plan_detail_api(request, plan_id):
                 plan.deadline = timezone.datetime.fromisoformat(deadline.replace('Z', '+00:00'))
             except:
                 pass
+        
+        # Sorular güncellendiyse temizle ve kaydet
+        if isinstance(poll_questions, list):
+            clean_questions = [q.strip() for q in poll_questions if isinstance(q, str) and q.strip()]
+            plan.poll_questions = clean_questions[:3]
         
         plan.save()
         
@@ -434,6 +449,47 @@ def vote_place_api(request, plan_id):
         'vote': serializer.data,
         'created': created
     }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_poll_answers_api(request, plan_id):
+    """
+    Grup planı içindeki hızlı anket sorularına cevap kaydet.
+    Body: { "answers": { "0": "Evet", "1": "23:00", "2": "Kadıköy" } }
+    """
+    try:
+        plan = GroupPlan.objects.get(id=plan_id)
+        participant = PlanParticipant.objects.get(plan=plan, user=request.user)
+    except (GroupPlan.DoesNotExist, PlanParticipant.DoesNotExist):
+        return Response(
+            {'success': False, 'error': 'Plan veya katılımcı bulunamadı'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    answers = request.data.get('answers', {})
+    if not isinstance(answers, dict):
+        return Response(
+            {'success': False, 'error': 'answers alanı dict olmalı'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Sadece mevcut sorular için cevap al
+    valid_answers = {}
+    for idx, _ in enumerate(plan.poll_questions or []):
+        key = str(idx)
+        if key in answers and isinstance(answers[key], str):
+            value = answers[key].strip()
+            if value:
+                valid_answers[key] = value
+    
+    participant.poll_answers = valid_answers
+    participant.save()
+    
+    return Response({
+        'success': True,
+        'poll_answers': valid_answers
+    })
 
 
 @api_view(['POST'])

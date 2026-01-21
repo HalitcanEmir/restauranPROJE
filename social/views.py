@@ -9,28 +9,58 @@ from .models import Friendship, UserScore, GroupPlan
 
 @login_required
 def friends_feed(request):
-    """Arkadaş feed sayfası"""
-    # Kullanıcının arkadaşlarını al
+    """Arkadaş alanı ana sayfası (özet/navigasyon)"""
+    # Arkadaş ve istek sayıları için basit özet
     friendships = Friendship.objects.filter(
         Q(requester=request.user, status='accepted') |
         Q(receiver=request.user, status='accepted')
     )
-    
+    friends_count = friendships.count()
+
+    pending_requests = Friendship.objects.filter(
+        Q(receiver=request.user, status='pending') |
+        Q(requester=request.user, status='pending')
+    ).count()
+
+    # Arkadaşların toplam ziyaret sayısı
+    friend_users = []
+    for friendship in friendships:
+        friend_users.append(
+            friendship.receiver if friendship.requester == request.user else friendship.requester
+        )
+
+    activity_count = Visit.objects.filter(user__in=friend_users).count() if friend_users else 0
+
+    context = {
+        'friends_count': friends_count,
+        'pending_requests_count': pending_requests,
+        'activity_count': activity_count,
+    }
+    return render(request, 'social/friends_feed.html', context)
+
+
+@login_required
+def friends_activity(request):
+    """Arkadaşların gittiği yerler feed sayfası"""
+    friendships = Friendship.objects.filter(
+        Q(requester=request.user, status='accepted') |
+        Q(receiver=request.user, status='accepted')
+    )
+
     friends = []
     for friendship in friendships:
         if friendship.requester == request.user:
             friends.append(friendship.receiver)
         else:
             friends.append(friendship.requester)
-    
-    # Arkadaşların son ziyaretlerini al
+
     visits = Visit.objects.filter(user__in=friends).order_by('-visited_at')[:50]
-    
+
     context = {
         'visits': visits,
         'friends': friends,
     }
-    return render(request, 'social/friends_feed.html', context)
+    return render(request, 'social/friends_activity.html', context)
 
 
 @login_required
