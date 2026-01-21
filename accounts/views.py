@@ -4,7 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.utils import timezone
+import json
 from .forms import RegisterForm, ProfileEditForm
+from visits.models import Visit
 
 User = get_user_model()
 
@@ -64,10 +67,16 @@ def profile_view(request, username):
     visits = user.visits.all()[:10]  # Son 10 ziyaret
     is_own_profile = request.user == user
     
+    # Takvim için ziyaret edilen günleri hazırla (sadece tarih, saat olmadan)
+    visit_dates_qs = Visit.objects.filter(user=user).values_list('visited_at__date', flat=True)
+    visit_dates = sorted({d.isoformat() for d in visit_dates_qs})
+    visit_dates_json = json.dumps(list(visit_dates))
+    
     context = {
         'profile_user': user,
         'visits': visits,
         'is_own_profile': is_own_profile,
+        'visit_dates_json': visit_dates_json,
     }
     return render(request, 'accounts/profile.html', context)
 

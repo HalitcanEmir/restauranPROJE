@@ -90,6 +90,21 @@
         
         <!-- Main Content -->
         <main class="profile-main">
+            {% if is_own_profile %}
+            <section class="calendar-section">
+                <h2 class="calendar-section-title">
+                    <i class="bi bi-grid-3x3-gap"></i> Ziyaret Takvimi
+                </h2>
+                <p class="calendar-section-subtitle">
+                    Son 1 yılda hangi günlerde değerlendirme girdiğini gösterir. Yeşil günler: en az 1 ziyaret, gri günler: kayıt yok.
+                </p>
+                <div id="visitCalendar"
+                     class="visit-calendar"
+                     data-visit-dates='{{ visit_dates_json|escapejs }}'>
+                </div>
+            </section>
+            {% endif %}
+
             <section class="visits-section">
                 <h2 class="visits-section-title">
                     <i class="bi bi-calendar-check"></i> Gittiğim Yerler

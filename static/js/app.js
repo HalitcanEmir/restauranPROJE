@@ -84,19 +84,19 @@ class App {
     }
     
     setupGlobalHandlers() {
-        // Form validation
+        // Form validation + loading states birlikte yönetilsin
         document.querySelectorAll('form[data-validate]').forEach(form => {
             form.addEventListener('submit', (e) => {
+                const loadingButtons = form.querySelectorAll('[data-loading]');
+                
                 if (!this.validateForm(form)) {
                     e.preventDefault();
+                    // Hatalıysa butonları eski haline getir
+                    loadingButtons.forEach(btn => btn.setLoading(false));
+                } else {
+                    // Geçerliyse submit olurken loading göster
+                    loadingButtons.forEach(btn => btn.setLoading(true));
                 }
-            });
-        });
-        
-        // Loading states
-        document.querySelectorAll('[data-loading]').forEach(button => {
-            button.addEventListener('click', function() {
-                this.setLoading(true);
             });
         });
     }

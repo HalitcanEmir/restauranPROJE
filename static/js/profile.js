@@ -11,6 +11,7 @@ class ProfilePage {
     init() {
         this.loadTasteProfile();
         this.setupAnimations();
+        this.renderVisitCalendar();
     }
     
     setupAnimations() {
@@ -225,6 +226,57 @@ class ProfilePage {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    renderVisitCalendar() {
+        const calendarEl = document.getElementById('visitCalendar');
+        if (!calendarEl) return;
+
+        let visitDates = [];
+        try {
+            const raw = calendarEl.dataset.visitDates || '[]';
+            visitDates = JSON.parse(raw);
+        } catch (e) {
+            console.error('visit_dates_json parse error', e);
+            visitDates = [];
+        }
+
+        const visitSet = new Set(visitDates);
+
+        const today = new Date();
+        // Son 365 günü göster
+        const days = [];
+        for (let i = 364; i >= 0; i--) {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(today.getDate() - i);
+            days.push(d);
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'visit-calendar-grid';
+
+        days.forEach(date => {
+            const iso = date.toISOString().slice(0, 10);
+            const isVisited = visitSet.has(iso);
+            const dayEl = document.createElement('div');
+            dayEl.className = 'visit-calendar-day' + (isVisited ? ' visited' : '');
+            dayEl.title = `${iso} - ${isVisited ? 'Ziyaret var' : 'Kayıt yok'}`;
+            grid.appendChild(dayEl);
+        });
+
+        const legend = document.createElement('div');
+        legend.className = 'visit-calendar-legend';
+        legend.innerHTML = `
+            <span>Az</span>
+            <span class="visit-calendar-legend-swatch"></span>
+            <span class="visit-calendar-legend-swatch visited"></span>
+            <span>Çok</span>
+        `;
+
+        calendarEl.innerHTML = '';
+        calendarEl.appendChild(grid);
+        calendarEl.appendChild(legend);
     }
 }
 
