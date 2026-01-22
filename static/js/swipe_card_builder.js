@@ -123,9 +123,18 @@ class SwipeCardBuilder {
             stars.className = 'card-rating-stars';
             const fullStars = Math.floor(place.average_rating);
             const hasHalfStar = place.average_rating % 1 >= 0.5;
-            stars.innerHTML = '★'.repeat(fullStars) + 
-                             (hasHalfStar ? '½' : '') + 
-                             '☆'.repeat(5 - fullStars - (hasHalfStar ? 1 : 0));
+            // Bootstrap Icons kullan
+            let starsHTML = '';
+            for (let i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    starsHTML += '<i class="bi bi-star-fill"></i>';
+                } else if (i === fullStars && hasHalfStar) {
+                    starsHTML += '<i class="bi bi-star-half"></i>';
+                } else {
+                    starsHTML += '<i class="bi bi-star"></i>';
+                }
+            }
+            stars.innerHTML = starsHTML;
             
             const numeric = document.createElement('span');
             numeric.className = 'card-rating-numeric';
